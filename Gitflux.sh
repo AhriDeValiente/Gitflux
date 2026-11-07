@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # ============================================================
-# Gitflux v6.1.0 — Cross-Platform GitHub CLI Assistant (Stable)
+# Gitflux v6.2.0 — Cross-Platform GitHub CLI Assistant (Stable)
 # Developer By: Ziferd
 # Bilingual (EN / ID) — set GITFLUX_LANG=id for Indonesian
+# Adaptive terminal-width help + pager + NO_COLOR support
 # ============================================================
 set -euo pipefail
 GITFLUX_LANG="${GITFLUX_LANG:-en}"
-VERSION="6.1.0"
+VERSION="6.2.0"
 
 # ==================== BILINGUAL MESSAGES ====================
 if [ "$GITFLUX_LANG" = "id" ]; then
-# General
 T_DEPENDENCIES_OK="Semua dependensi terpenuhi."
 T_DEPENDENCIES_MISSING="Dependensi berikut belum terinstal:"
 T_RUN_SETUP="Jalankan: gitflux setup"
@@ -25,8 +25,6 @@ T_YES_NO="[y/N]"
 T_DETACHED_HEAD="Detached HEAD atau repo kosong. Tidak dapat melanjutkan."
 T_COMMIT_CANCELLED="Commit dibatalkan."
 T_REMOTE_NOT_SET="tidak disetel"
-
-# Deploy
 T_DEPLOY_START="Deploy ke branch"
 T_FILE_STAGED="File di-stage."
 T_FILE_STAGE_FAILED="Gagal stage file."
@@ -45,78 +43,52 @@ T_PUSH_SUCCESS="Push ke '%s' berhasil."
 T_PUSH_ERROR="Push gagal."
 T_PULL_SUCCESS="Pull dari '%s' berhasil."
 T_PULL_ERROR="Pull gagal."
-
-# Stash
 T_STASH_SAVED="Perubahan disimpan."
 T_STASH_POPPED="Stash dikeluarkan."
 T_STASH_APPLIED="Stash diterapkan."
 T_STASH_DROPPED="Stash dihapus."
 T_USAGE_STASH="Gunakan: list, save [pesan], pop, apply, drop"
-
-# Tag
 T_TAG_CREATED="Tag '%s' dibuat."
 T_TAG_DELETED="Tag '%s' dihapus."
 T_TAG_PUSHED="Tag di-push."
 T_USAGE_TAG="Gunakan: list, create <nama> [-m pesan], push, delete <nama>"
 T_TAG_NAME_REQUIRED="Nama tag diperlukan."
 T_TAG_INVALID_NAME="Nama tag mengandung karakter tidak valid."
-
-# Remote
 T_REMOTE_ADDED="Remote '%s' ditambahkan."
 T_REMOTE_UPDATED="Remote '%s' diperbarui."
 T_REMOTE_DELETED="Remote '%s' dihapus."
 T_REMOTE_RENAMED="Remote '%s' diubah menjadi '%s'."
 T_USAGE_REMOTE="Gunakan: show, add <nama> <url>, set <nama> <url>, rename <lama> <baru>, delete <nama>"
 T_REMOTE_NAME_REQUIRED="Nama remote diperlukan."
-
-# Init
 T_REPO_INIT="Repo '%s' dibuat. Tambahkan remote: gitflux remote add origin <url>"
 T_FOLDER_EXISTS="Folder '%s' sudah ada."
 T_CREATE_FOLDER_FAIL="Gagal membuat folder."
-
-# Branch
 T_BRANCH_CREATED="Branch '%s' dibuat."
 T_BRANCH_SWITCHED="Pindah ke '%s'."
 T_BRANCH_DELETED="Branch '%s' dihapus."
 T_BRANCH_DELETE_FAIL="Gagal menghapus branch."
 T_BRANCH_RENAMED="Branch '%s' diubah menjadi '%s'."
 T_USAGE_BRANCH="Gunakan: list, create <nama>, switch <nama>, delete <nama>, rename <lama> <baru>"
-
-# Merge
 T_MERGE_OK="Merge berhasil."
 T_MERGE_CONFLICT="Merge konflik. Selesaikan secara manual."
 T_USAGE_MERGE="Gunakan: gitflux merge <branch> [--no-ff|--squash]"
-
-# Fetch
 T_FETCH_OK="Fetch selesai."
-
-# Reset
 T_RESET_SOFT="Reset soft ke '%s'."
 T_RESET_HARD="Reset hard ke '%s'."
 T_USAGE_RESET="Gunakan: gitflux reset [soft|hard] [target]"
 T_RESET_HARD_CONFIRM="Reset HARD akan menghapus perubahan. Yakin?"
-
-# Squash
 T_SQUASH_DONE="Squash selesai."
 T_SQUASH_INVALID_N="Jumlah commit harus bilangan bulat minimal 2."
 T_SQUASH_TOO_LARGE="Jumlah commit melebihi total commit yang ada."
-
-# Rebase
 T_REBASE_DONE="Rebase selesai."
 T_REBASE_CONFLICT="Rebase konflik."
-
-# Cherry-pick
 T_CHERRY_PICK_DONE="Commit di-cherry-pick."
 T_USAGE_CHERRY_PICK="Gunakan: gitflux cherry-pick <commit>"
-
-# Bisect
 T_BISECT_START="Bisect dimulai."
 T_BISECT_GOOD="Commit ditandai good."
 T_BISECT_BAD="Commit ditandai bad."
 T_BISECT_RESET="Bisect direset."
 T_USAGE_BISECT="Gunakan: start, good, bad, reset"
-
-# GitHub API
 T_REPO_CREATE_OK="Repo GitHub '%s' dibuat."
 T_REPO_CREATE_FAIL="Gagal membuat repo."
 T_CLONE_OK="Clone selesai."
@@ -141,55 +113,37 @@ T_USAGE_ISSUE="Gunakan: list, create <judul>, close <nomor>, view <nomor>"
 T_USAGE_PR="Gunakan: list, create <judul>, merge <nomor>, checkout <nomor>, review <nomor>"
 T_USAGE_RELEASE="Gunakan: list, create <tag>, delete <tag>"
 T_USAGE_ACTIONS="Gunakan: list, watch <id>, trigger <workflow>"
-
-# Backup
 T_BACKUP_START="Mem-backup semua repo ke '%s'..."
 T_BACKUP_DONE="Backup selesai."
-
-# Stats
 T_STATS_COMMIT_BY="Commit oleh %s:"
 T_STATS_LINES="Total baris kode:"
 T_STATS_LANG="Bahasa dominan:"
-
-# Daemon
 T_DAEMON_START="Daemon Gitflux berjalan (sinkronisasi tiap %s detik)..."
 T_DAEMON_ALREADY="Daemon sudah berjalan."
 T_DAEMON_STOPPED="Daemon dihentikan."
 T_DAEMON_NOT_RUNNING="Daemon tidak berjalan."
 T_DAEMON_STATUS="Daemon berjalan dengan PID %s"
 T_USAGE_DAEMON="Gunakan: start [detik], stop, status, restart [detik]"
-
-# Webhook
 T_WEBHOOK_OK="Webhook terkirim."
 T_WEBHOOK_FAIL="Webhook gagal."
 T_WEBHOOK_RETRY="Mencoba ulang... (%s/%s)"
 T_WEBHOOK_URL_NOT_SET="Setel WEBHOOK_URL terlebih dahulu."
-
-# Keygen
 T_KEYGEN_OK="Kunci dibuat: %s"
 T_KEYGEN_FAIL="Gagal membuat kunci."
 T_KEYGEN_BACKUP="Kunci lama di-backup ke: %s"
-
-# Config
 T_CONFIG_SET="%s disetel ke %s."
 T_CONFIG_SET_FAIL="Gagal menyetel %s."
 T_CONFIG_REMOTE_OK="Remote dikonfigurasi."
 T_USAGE_CONFIG="Gunakan: show, set <key> <value> [--local], remote <url>"
-
-# Undo
 T_UNDO_COMMIT="Commit terakhir dibatalkan (file aman)."
 T_UNDO_FILE="File '%s' dikembalikan."
 T_UNDO_HARD="Semua perubahan dibuang."
 T_USAGE_UNDO="Gunakan: commit, file <nama>, hard"
 T_UNDO_HARD_CONFIRM="Ini akan menghapus SEMUA perubahan. Yakin?"
-
-# Setup
 T_SETUP_DONE="Setup selesai. Coba: gitflux help"
 T_ALREADY_LOGIN="Sudah login ke GitHub."
 T_LOGIN_PROMPT="Silakan login ke GitHub:"
-
 else
-# English messages
 T_DEPENDENCIES_OK="All dependencies satisfied."
 T_DEPENDENCIES_MISSING="Missing dependencies:"
 T_RUN_SETUP="Run: gitflux setup"
@@ -346,6 +300,7 @@ T_NEED_TARGET="Reset hard memerlukan target eksplisit (mis. HEAD~1)."
 T_FILE_NOT_FOUND="File tidak ditemukan: %s"
 T_SENSITIVE_REFUSE="Ditolak: '%s' tampak sebagai file sensitif."
 T_MERGE_FAIL="Merge gagal."
+T_HELP_UNKNOWN_SECTION="Bagian bantuan tidak dikenal: %s"
 else
 T_INVALID_CHARS="Invalid characters detected in %s."
 T_NO_ORIGIN="Remote 'origin' is not set. Run: gitflux remote add origin <url>"
@@ -367,19 +322,103 @@ T_NEED_TARGET="Hard reset requires an explicit target (e.g. HEAD~1)."
 T_FILE_NOT_FOUND="File not found: %s"
 T_SENSITIVE_REFUSE="Refused: '%s' looks like a sensitive file."
 T_MERGE_FAIL="Merge failed."
+T_HELP_UNKNOWN_SECTION="Unknown help section: %s"
 fi
+
+# ==================== ADAPTIVE UI (width, color, wrap) ====================
+# Lebar terminal: tput cols saat tty; fallback stty via /dev/tty (penting saat
+# stdout di-pipe ke pager), lalu $COLUMNS, lalu default 80. Clamp 40..200.
+term_width() {
+    local w="" sz=""
+    if [ -t 1 ]; then
+        w="$(tput cols 2>/dev/null || true)"
+    elif [ -e /dev/tty ]; then
+        sz="$(stty size </dev/tty 2>/dev/null || true)"
+        w="${sz##* }"
+    fi
+    case "$w" in ''|*[!0-9]*) w=0 ;; esac
+    if [ "$w" -lt 40 ]; then
+        case "${COLUMNS:-}" in ''|*[!0-9]*) w=80 ;; *) w="$COLUMNS" ;; esac
+    fi
+    case "$w" in ''|*[!0-9]*) w=80 ;; esac
+    [ "$w" -ge 40 ] || w=40
+    [ "$w" -le 200 ] || w=200
+    echo "$w"
+}
+
+# Warna hanya saat tty dan NO_COLOR tidak diset (konvensi no-color.org)
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    C_SEC=$'\033[1;36m'   # judul seksi: cyan tebal
+    C_CMD=$'\033[1m'      # nama perintah: tebal
+    C_DESC=$'\033[2m'     # deskripsi: redup
+    C_OFF=$'\033[0m'
+else
+    C_SEC=''; C_CMD=''; C_DESC=''; C_OFF=''
+fi
+
+HELP_W="$(term_width)"
+
+_t() { if [ "$GITFLUX_LANG" = "id" ]; then printf '%s' "$2"; else printf '%s' "$1"; fi; }
+
+# Wrap teks ke lebar w; baris lanjutan menjorok 'hang' kolom (hanging indent).
+_wrap() {
+    local text="$1" w="$2" hang="$3" on="$4" off="$5"
+    local -a words
+    read -r -a words <<< "$text"
+    local line="" word first=1
+    for word in ${words[@]+"${words[@]}"}; do
+        if [ -z "$line" ]; then
+            line="$word"
+        elif [ $(( ${#line} + 1 + ${#word} )) -le "$w" ]; then
+            line="$line $word"
+        else
+            if [ "$first" -eq 1 ]; then printf '%s%s%s\n' "$on" "$line" "$off"; first=0
+            else printf '%*s%s\n' "$hang" '' "$line"; fi
+            line="$word"
+        fi
+    done
+    if [ -n "$line" ]; then
+        if [ "$first" -eq 1 ]; then printf '%s%s%s\n' "$on" "$line" "$off"
+        else printf '%*s%s\n' "$hang" '' "$line"; fi
+    fi
+}
+
+help_section() {
+    local title=" $1 " i used
+    printf '\n%s──%s' "$C_SEC" "$title"
+    used=$(( ${#title} + 2 ))
+    for (( i = used; i < HELP_W; i++ )); do printf '─'; done
+    printf '%s\n' "$C_OFF"
+}
+
+# Baris entri: usage + deskripsi satu baris bila muat,否则 deskripsi di baris
+# berikutnya dengan indent 4. Tidak ada lagi baris yang melebihi lebar terminal.
+help_item() {
+    local u="$1" d="$2"
+    local indent=2 gap=2 ulen descw hang
+    ulen=${#u}
+    if [ $(( indent + ulen + gap + 24 )) -le "$HELP_W" ]; then
+        printf '%*s%s%s%s%*s' "$indent" '' "$C_CMD" "$u" "$C_OFF" "$gap" ''
+        descw=$(( HELP_W - indent - ulen - gap ))
+        hang=$(( indent + ulen + gap ))
+        _wrap "$d" "$descw" "$hang" "$C_DESC" "$C_OFF"
+    else
+        printf '%*s%s%s%s\n' "$indent" '' "$C_CMD" "$u" "$C_OFF"
+        descw=$(( HELP_W - indent - 4 ))
+        _wrap "$d" "$descw" $(( indent + 4 )) "$C_DESC" "$C_OFF"
+    fi
+}
 
 # ==================== UI FUNCTIONS ====================
 info()  { echo "[INFO] $*"; }
 ok()    { echo "[OK] $*"; }
 fail()  { echo "[FAIL] $*" >&2; }
-warn()  { echo "[WARN] $*" >&2; }
+warn()  { echo "[WARN] $*"; }
 banner() {
     echo ""
-    echo "╭────────────────────────────────────────────────╮"
-    echo "│  Gitflux v${VERSION} — Cross-Platform CLI (Stable)"
-    echo "│ Developer By: Ziferd"
-    echo "╰────────────────────────────────────────────────╯"
+    printf '%sGitflux v%s%s — %s\n' "$C_CMD" "$VERSION" "$C_OFF" \
+        "$(_t 'Cross-Platform CLI (Stable)' 'CLI Lintas Platform (Stable)')"
+    printf '%sDeveloper By: Ziferd%s\n' "$C_DESC" "$C_OFF"
     echo ""
 }
 
@@ -572,7 +611,6 @@ check_deps() {
 install_deps() {
     local SUDO=""
     info "Detecting package manager & installing dependencies..."
-    
     if [ "$OS" = "windows" ]; then
         if command -v winget >/dev/null 2>&1; then
             winget install --id Git.Git -e --source winget
@@ -591,7 +629,6 @@ install_deps() {
         else fail "Root or sudo is required."; return 1
         fi
     fi
-    
     if is_termux; then
         pkg update -y && pkg install -y git gh curl openssh
     elif command -v apt-get >/dev/null 2>&1; then
@@ -608,10 +645,8 @@ install_deps() {
         fail "Unsupported package manager. Install manually: git gh curl openssh"
         return 1
     fi
-    
     ok "Dependencies installed."
     check_deps || return 1
-    
     if ! gh auth status &>/dev/null; then
         info "$T_LOGIN_PROMPT"
         gh auth login
@@ -717,7 +752,7 @@ cmd_status() {
     info "Remote: $url"
 }
 
-cmd_log() { 
+cmd_log() {
     check_git || return 1
     local count="${1:-20}"
     validate_number "$count" || return 1
@@ -852,15 +887,13 @@ cmd_merge() {
     local b="${1:-}"
     local strategy=""
     [ -n "$b" ] || { fail "$T_USAGE_MERGE"; return 1; }
-    
     if [ "${2:-}" = "--no-ff" ]; then
         strategy="--no-ff"
     elif [ "${2:-}" = "--squash" ]; then
         strategy="--squash"
     fi
-    
     validate_rev "$b" || return 1
-    if run_git merge $strategy "$b"; then 
+    if run_git merge $strategy "$b"; then
         ok "$T_MERGE_OK"
         return 0
     fi
@@ -868,7 +901,7 @@ cmd_merge() {
     return 1
 }
 
-cmd_fetch() { 
+cmd_fetch() {
     check_git || return 1
     run_git fetch --all --prune && ok "$T_FETCH_OK"
 }
@@ -893,7 +926,7 @@ cmd_reset() {
     esac
 }
 
-cmd_reflog() { 
+cmd_reflog() {
     check_git || return 1
     git reflog -20
 }
@@ -968,23 +1001,19 @@ cmd_clone() {
     local r="${1:-}"
     local depth="" branch=""
     shift || true
-    
     while [ $# -gt 0 ]; do
         case "$1" in
-            --depth) depth="--depth ${2:-}"; shift 2 ;;
+            --depth)  depth="--depth ${2:-}"; shift 2 ;;
             --branch) branch="--branch ${2:-}"; shift 2 ;;
             *) shift ;;
         esac
     done
-    
     [ -n "$r" ] || { fail "$T_USAGE_CLONE"; return 1; }
     [[ "$r" =~ $RE_REPO_FULL ]] || { fail "$T_INVALID_INPUT"; return 1; }
-    
-    if run_gh repo clone $depth $branch "$r"; then 
+    if run_gh repo clone $depth $branch "$r"; then
         ok "$T_CLONE_OK"
-    else 
-        fail "$T_CLONE_FAIL"
-        return 1
+    else
+        fail "$T_CLONE_FAIL"; return 1
     fi
 }
 
@@ -1073,21 +1102,17 @@ cmd_actions() {
     esac
 }
 
-# ==================== BACKUP (with pagination) ====================
+# ==================== BACKUP ====================
 cmd_backup() {
     local dest="${1:-$HOME/gitflux-backups}" max_jobs=4
     local -a pids=()
     local r dir p failed=0 page=1 per_page=100
-    
     mkdir -p -- "$dest"
     info "$(printf "$T_BACKUP_START" "$dest")"
-    
     while true; do
         local repos
         repos=$(gh repo list --limit "$per_page" --json nameWithOwner --jq '.[].nameWithOwner' 2>/dev/null || echo "")
-        
         [ -n "$repos" ] || break
-        
         while IFS= read -r r; do
             [ -n "$r" ] || continue
             dir="$dest/${r#*/}"
@@ -1101,15 +1126,12 @@ cmd_backup() {
             ) &
             pids+=("$!")
         done <<< "$repos"
-        
         page=$((page + 1))
-        [ "$page" -le 10 ] || break  # Max 1000 repos
+        [ "$page" -le 10 ] || break
     done
-    
     for p in ${pids[@]+"${pids[@]}"}; do
         wait "$p" || failed=$((failed + 1))
     done
-    
     if [ "$failed" -gt 0 ]; then
         fail "$(printf "$T_BACKUP_FAILED" "$failed")"
         return 1
@@ -1117,12 +1139,11 @@ cmd_backup() {
     ok "$T_BACKUP_DONE"
 }
 
-# ==================== STATS (optimized) ====================
+# ==================== STATS ====================
 cmd_stats() {
     check_git || return 1
     echo "$T_STATS_TOP"
     git shortlog -sn --all | head -10 || true
-    
     echo "$T_STATS_LINES"
     if [ -n "$(git ls-files | head -n 1)" ]; then
         git ls-files -z | xargs -0 file 2>/dev/null | grep -v 'binary\|image\|executable' | \
@@ -1130,13 +1151,12 @@ cmd_stats() {
     else
         echo 0
     fi
-    
     echo "$T_STATS_LANG"
     git ls-files | awk -F/ '{n=$NF} n ~ /\.[^.]+$/ {sub(/.*\./,"",n); c[n]++} END{for(k in c) print c[k], k}' \
     | sort -rn | head -5 || true
 }
 
-# ==================== DAEMON (with management) ====================
+# ==================== DAEMON ====================
 cmd_daemon() {
     check_git || return 1
     local action="${1:-start}"
@@ -1145,7 +1165,6 @@ cmd_daemon() {
     mkdir -p -- "$base" && chmod 700 "$base"
     key="$(git rev-parse --show-toplevel | cksum | cut -d' ' -f1)"
     DAEMON_LOCK="$base/daemon-$key.lock"
-    
     case "$action" in
         start)
             { [[ "$int" =~ ^[0-9]+$ ]] && [ "$int" -ge 1 ]; } || { fail "$T_BAD_INTERVAL"; return 1; }
@@ -1213,13 +1232,12 @@ cmd_daemon() {
     esac
 }
 
-# ==================== WEBHOOK (with retry) ====================
+# ==================== WEBHOOK ====================
 cmd_webhook() {
     local url="${WEBHOOK_URL:-}" re='^https://[^[:space:]"\\]+$'
     local max_retries=3 retry=0
     [ -n "$url" ] || { fail "$T_WEBHOOK_URL_NOT_SET"; return 1; }
     [[ "$url" =~ $re ]] || { fail "$T_BAD_URL"; return 1; }
-    
     while [ $retry -lt $max_retries ]; do
         local ts; ts="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
         if printf 'url = "%s"\n' "$url" | curl -fsS --max-time 10 \
@@ -1236,24 +1254,20 @@ cmd_webhook() {
             fi
         fi
     done
-    
     fail "$T_WEBHOOK_FAIL"
     return 1
 }
 
-# ==================== KEYGEN (with force option) ====================
+# ==================== KEYGEN ====================
 cmd_keygen() {
     local email="${1:-gitflux@termux.local}"
     local force=false
     local dir="$HOME/.ssh" key="$HOME/.ssh/id_ed25519_gitflux"
-    
     if [ "${2:-}" = "--force" ]; then
         force=true
     fi
-    
     validate_text "$email" "email" || return 1
     mkdir -p -- "$dir" && chmod 700 "$dir"
-    
     if [ -e "$key" ] || [ -e "$key.pub" ]; then
         if [ "$force" = true ]; then
             local backup="$key.bak.$(date +%s)"
@@ -1265,7 +1279,6 @@ cmd_keygen() {
             return 1
         fi
     fi
-    
     if (umask 077; ssh-keygen -t ed25519 -C "$email" -f "$key"); then
         ok "$(printf "$T_KEYGEN_OK" "$key")"
         info "Public key:"
@@ -1277,7 +1290,7 @@ cmd_keygen() {
     fi
 }
 
-# ==================== CONFIG (with scope option) ====================
+# ==================== CONFIG ====================
 cmd_config() {
     case "${1:-show}" in
         show)   git config --list | mask_url ;;
@@ -1327,138 +1340,103 @@ cmd_undo() {
 # ==================== SETUP & HELP ====================
 cmd_setup() { install_deps; }
 
+_help_render() {
+    local sec="${1:-all}"
+    printf '%sGitflux v%s%s — %s\n' "$C_CMD" "$VERSION" "$C_OFF" \
+        "$(_t 'GitHub CLI Assistant' 'Asisten CLI GitHub')"
+    printf '%s\n' "$(_t 'Usage: gitflux <command> [args]   |   gitflux help <section>' 'Pakai: gitflux <perintah> [arg]   |   gitflux help <bagian>')"
+    printf '%s\n' "$(_t 'Sections: basic branch history github auto setup' 'Bagian: basic branch history github auto setup')"
+
+    case "$sec" in
+        all|basic)
+            help_section "$(_t 'BASIC COMMANDS' 'PERINTAH DASAR')"
+            help_item 'deploy "msg" [branch]' "$(_t 'Stage, commit, push' 'Stage, commit, push')"
+            help_item 'push [branch]' "$(_t 'Push to remote' 'Push ke remote')"
+            help_item 'pull [branch]' "$(_t 'Pull from remote' 'Pull dari remote')"
+            help_item 'sync [branch]' "$(_t 'Commit, pull --rebase, push' 'Commit, pull --rebase, push')"
+            help_item 'status' "$(_t 'Repo status + branch/remote info' 'Status repo + info branch/remote')"
+            help_item 'log [count]' "$(_t 'Commit history (default 20)' 'Riwayat commit (default 20)')"
+            help_item 'diff [--cached]' "$(_t 'Show changes' 'Lihat perubahan')"
+            help_item 'stash list|save|pop|apply|drop' "$(_t 'Temporary stash' 'Simpan sementara')"
+            help_item 'tag list|create|push|delete' "$(_t 'Manage tags (create -m = annotated)' 'Kelola tag (create -m = annotated)')"
+            help_item 'remote show|add|set|rename|delete' "$(_t 'Manage remotes' 'Kelola remote')"
+            help_item 'init [name]' "$(_t 'Create new repo' 'Buat repo baru')"
+            ;;
+    esac
+    case "$sec" in
+        all|branch)
+            help_section "$(_t 'BRANCH & MERGE' 'BRANCH & MERGE')"
+            help_item 'branch list|create|switch|delete|rename' "$(_t 'Manage branches' 'Kelola branch')"
+            help_item 'merge <branch> [--no-ff|--squash]' "$(_t 'Merge branch' 'Gabungkan branch')"
+            help_item 'fetch' "$(_t 'Fetch all remotes + prune' 'Fetch semua remote + prune')"
+            ;;
+    esac
+    case "$sec" in
+        all|history)
+            help_section "$(_t 'REWRITE HISTORY' 'REWRITE HISTORY')"
+            help_item 'reset soft|hard [target]' "$(_t 'Reset to commit' 'Reset ke commit')"
+            help_item 'reflog' "$(_t 'HEAD recovery' 'Penyelamat HEAD')"
+            help_item 'squash [count]' "$(_t 'Squash last N commits' 'Gabung N commit terakhir')"
+            help_item 'rebase [branch]' "$(_t 'Rebase onto branch' 'Rebase ke branch')"
+            help_item 'cherry-pick <commit>' "$(_t 'Pick a commit' 'Ambil commit')"
+            help_item 'bisect start|good|bad|reset' "$(_t 'Find bug commit' 'Cari commit bug')"
+            ;;
+    esac
+    case "$sec" in
+        all|github)
+            help_section 'GITHUB API'
+            help_item 'repo <name> [public|private]' "$(_t 'Create GitHub repo' 'Buat repo GitHub')"
+            help_item 'clone <user/repo> [--depth N] [--branch b]' "$(_t 'Clone repo' 'Clone repo')"
+            help_item 'gist list|create|edit|delete' "$(_t 'Manage Gists' 'Kelola Gist')"
+            help_item 'issue list|create|close|view' "$(_t 'Manage Issues' 'Kelola Issue')"
+            help_item 'pr list|create|merge|checkout|review' "$(_t 'Manage Pull Requests' 'Kelola Pull Request')"
+            help_item 'release list|create|delete' "$(_t 'Manage Releases' 'Kelola Release')"
+            help_item 'actions list|watch|trigger' "$(_t 'GitHub Actions' 'GitHub Actions')"
+            ;;
+    esac
+    case "$sec" in
+        all|auto)
+            help_section "$(_t 'AUTOMATION' 'AUTOMASI')"
+            help_item 'backup [folder]' "$(_t 'Backup all repos (parallel)' 'Backup semua repo (paralel)')"
+            help_item 'stats' "$(_t 'Contribution stats' 'Statistik kontribusi')"
+            help_item 'daemon start|stop|status|restart [sec]' "$(_t 'Auto-sync daemon' 'Daemon auto-sync')"
+            help_item 'webhook' "$(_t 'Test webhook (WEBHOOK_URL)' 'Uji webhook (WEBHOOK_URL)')"
+            ;;
+    esac
+    case "$sec" in
+        all|setup)
+            help_section "$(_t 'SETUP & CONFIG' 'SETUP & CONFIG')"
+            help_item 'setup' "$(_t 'Install dependencies' 'Install dependensi')"
+            help_item 'config show|set|remote' "$(_t 'Configure git (set --local = per-repo)' 'Konfigurasi git (set --local = per-repo)')"
+            help_item 'undo commit|file|hard' "$(_t 'Undo changes' 'Batalkan perubahan')"
+            help_item 'keygen [email] [--force]' "$(_t 'Generate SSH key' 'Buat kunci SSH')"
+            help_item 'help [section]' "$(_t 'This help' 'Bantuan ini')"
+            ;;
+    esac
+    case "$sec" in
+        all)
+            help_section "$(_t 'TIPS' 'TIPS')"
+            help_item 'export GITFLUX_LANG=id|en' "$(_t 'Switch language' 'Ganti bahasa')"
+            help_item 'export WEBHOOK_URL=https://...' "$(_t 'Enable notifications' 'Aktifkan notifikasi')"
+            help_item 'export GITFLUX_NOPAGER=1' "$(_t 'Disable pager (less)' 'Matikan pager (less)')"
+            help_item 'export NO_COLOR=1' "$(_t 'Disable colors' 'Matikan warna')"
+            help_item 'alias gf=gitflux' "$(_t 'Short alias in ~/.bashrc' 'Alias pendek di ~/.bashrc')"
+            ;;
+    esac
+    printf '\n'
+}
+
 cmd_help() {
-    echo ""
-    if [ "$GITFLUX_LANG" = "id" ]; then
-        echo "╔═══════════【★】「 GITFLUX v${VERSION} 」【★】"
-        echo "║ CLI Assistant untuk GitHub"
-        echo "║ Developer By: Ziferd"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 PERINTAH DASAR 」【★】"
-        echo "║gitflux deploy  \"pesan\" [branch]   — Stage, commit, push"
-        echo "║gitflux push    [branch]           — Push ke remote"
-        echo "║gitflux pull    [branch]           — Pull dari remote"
-        echo "║gitflux sync    [branch]           — Pull lalu push"
-        echo "║gitflux status                     — Status repo"
-        echo "║gitflux log     [jumlah]           — Riwayat commit"
-        echo "║gitflux diff    [--cached]         — Perubahan"
-        echo "║gitflux stash list|save|pop|apply|drop — Simpan sementara"
-        echo "║gitflux tag list|create|push|delete — Kelola tag"
-        echo "║gitflux remote show|add|set|rename|delete — Kelola remote"
-        echo "║gitflux init    [nama]             — Buat repo baru"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 BRANCH & MERGE 」【★】"
-        echo "║gitflux branch list|create|switch|delete|rename — Kelola branch"
-        echo "║gitflux merge   <branch> [--no-ff|--squash] — Gabungkan branch"
-        echo "║gitflux fetch                      — Ambil metadata"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 REWRITE HISTORY 」【★】"
-        echo "║gitflux reset soft|hard [target]   — Reset ke commit"
-        echo "║gitflux reflog                     — Penyelamat HEAD"
-        echo "║gitflux squash [jumlah]            — Gabung commit"
-        echo "║gitflux rebase [branch]            — Rebase"
-        echo "║gitflux cherry-pick <commit>       — Ambil commit"
-        echo "║gitflux bisect start|good|bad|reset — Cari bug"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 GITHUB API 」【★】"
-        echo "║gitflux repo  <name> [public|private] — Buat repo GitHub"
-        echo "║gitflux clone <user/repo> [--depth N] [--branch nama] — Clone"
-        echo "║gitflux gist list|create|edit|delete — Kelola Gist"
-        echo "║gitflux issue list|create|close|view — Kelola Issue"
-        echo "║gitflux pr list|create|merge|checkout|review — Kelola PR"
-        echo "║gitflux release list|create|delete — Kelola Release"
-        echo "║gitflux actions list|watch|trigger — GitHub Actions"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 AUTOMATION 」【★】"
-        echo "║gitflux backup [folder]            — Backup semua repo"
-        echo "║gitflux stats                      — Statistik kontribusi"
-        echo "║gitflux daemon start|stop|status|restart [detik] — Auto-sync"
-        echo "║gitflux webhook                    — Uji webhook"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 SETUP & CONFIG 」【★】"
-        echo "║gitflux setup                      — Install dependensi"
-        echo "║gitflux config show|set|remote     — Konfigurasi git"
-        echo "║gitflux undo commit|file|hard      — Batalkan perubahan"
-        echo "║gitflux keygen [email] [--force]   — Generate SSH key"
-        echo "║gitflux help                       — Bantuan ini"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 TIPS 」【★】"
-        echo "║ • export GITFLUX_LANG=en untuk Bahasa Inggris"
-        echo "║ • export WEBHOOK_URL=\"https://...\" untuk notifikasi"
-        echo "╚═══════════【★】"
+    local sec="${1:-all}"
+    case "$sec" in
+        all|basic|branch|history|github|auto|setup) ;;
+        *) fail "$(printf "$T_HELP_UNKNOWN_SECTION" "$sec")"; return 1 ;;
+    esac
+    if [ -t 1 ] && [ -z "${GITFLUX_NOPAGER:-}" ] && command -v less >/dev/null 2>&1; then
+        _help_render "$sec" | less -R
     else
-        echo "╔═══════════【★】「 GITFLUX v${VERSION} 」【★】"
-        echo "║ GitHub CLI Assistant"
-        echo "║ Developer By: Ziferd"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 BASIC COMMANDS 」【★】"
-        echo "║gitflux deploy  \"msg\" [branch]     — Stage, commit, push"
-        echo "║gitflux push    [branch]           — Push to remote"
-        echo "║gitflux pull    [branch]           — Pull from remote"
-        echo "║gitflux sync    [branch]           — Pull then push"
-        echo "║gitflux status                     — Repo status"
-        echo "║gitflux log     [count]            — Commit history"
-        echo "║gitflux diff    [--cached]         — Changes"
-        echo "║gitflux stash list|save|pop|apply|drop — Temporary stash"
-        echo "║gitflux tag list|create|push|delete — Manage tags"
-        echo "║gitflux remote show|add|set|rename|delete — Manage remotes"
-        echo "║gitflux init    [name]             — Create new repo"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 BRANCH & MERGE 」【★】"
-        echo "║gitflux branch list|create|switch|delete|rename — Manage branches"
-        echo "║gitflux merge   <branch> [--no-ff|--squash] — Merge branch"
-        echo "║gitflux fetch                      — Fetch metadata"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 REWRITE HISTORY 」【★】"
-        echo "║gitflux reset soft|hard [target]   — Reset to commit"
-        echo "║gitflux reflog                     — HEAD recovery"
-        echo "║gitflux squash [count]             — Squash commits"
-        echo "║gitflux rebase [branch]            — Rebase onto"
-        echo "║gitflux cherry-pick <commit>       — Pick commit"
-        echo "║gitflux bisect start|good|bad|reset — Find bug"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 GITHUB API 」【★】"
-        echo "║gitflux repo  <name> [public|private] — Create GitHub repo"
-        echo "║gitflux clone <user/repo> [--depth N] [--branch name] — Clone"
-        echo "║gitflux gist list|create|edit|delete — Manage Gists"
-        echo "║gitflux issue list|create|close|view — Manage Issues"
-        echo "║gitflux pr list|create|merge|checkout|review — Manage PRs"
-        echo "║gitflux release list|create|delete — Manage Releases"
-        echo "║gitflux actions list|watch|trigger — GitHub Actions"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 AUTOMATION 」【★】"
-        echo "║gitflux backup [folder]            — Backup all repos"
-        echo "║gitflux stats                      — Contribution stats"
-        echo "║gitflux daemon start|stop|status|restart [seconds] — Auto-sync"
-        echo "║gitflux webhook                    — Test webhook"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 SETUP & CONFIG 」【★】"
-        echo "║gitflux setup                      — Install dependencies"
-        echo "║gitflux config show|set|remote     — Configure git"
-        echo "║gitflux undo commit|file|hard      — Undo changes"
-        echo "║gitflux keygen [email] [--force]   — Generate SSH key"
-        echo "║gitflux help                       — This help"
-        echo "╚═══════════【★】"
-        echo ""
-        echo "╔═══════════【★】「 TIPS 」【★】"
-        echo "║ • export GITFLUX_LANG=id for Indonesian"
-        echo "║ • export WEBHOOK_URL=\"https://...\" for notifications"
-        echo "╚═══════════【★】"
+        _help_render "$sec"
     fi
-    echo ""
 }
 
 # ==================== MAIN DISPATCHER ====================
@@ -1510,7 +1488,7 @@ main() {
         config)       shift; cmd_config "$@" ;;
         undo)         shift; cmd_undo "$@" ;;
         setup)        shift; cmd_setup "$@" ;;
-        help|--help|-h) cmd_help ;;
+        help|--help|-h) shift; cmd_help "$@" ;;
         *)            fail "$T_FAIL_UNKNOWN $cmd"; info "$T_HELP_LINE"; return 1 ;;
     esac
 }
