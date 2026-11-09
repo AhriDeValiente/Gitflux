@@ -300,7 +300,17 @@ T_NEED_TARGET="Reset hard memerlukan target eksplisit (mis. HEAD~1)."
 T_FILE_NOT_FOUND="File tidak ditemukan: %s"
 T_SENSITIVE_REFUSE="Ditolak: '%s' tampak sebagai file sensitif."
 T_MERGE_FAIL="Merge gagal."
-T_HELP_UNKNOWN_SECTION="Bagian bantuan tidak dikenal: %s"
+T_STATUS_HEADER="Status repositori"
+T_STATUS_BRANCH="Branch"
+T_STATUS_REMOTE="Remote"
+T_STATUS_UPSTREAM="Upstream"
+T_STATUS_WORKING="Working tree"
+T_WORKING_CLEAN="bersih"
+T_SYNC_START="Sinkronisasi di branch '%s'"
+T_BACKUP_FOUND="Ditemukan %s repo. Memulai backup paralel (maks 4)..."
+T_SETUP_HEADER="Menyiapkan dependensi"
+T_LOGIN_HEADER="Autentikasi GitHub"
+T_TIP_HEADER="Tips cepat"
 else
 T_INVALID_CHARS="Invalid characters detected in %s."
 T_NO_ORIGIN="Remote 'origin' is not set. Run: gitflux remote add origin <url>"
@@ -322,12 +332,20 @@ T_NEED_TARGET="Hard reset requires an explicit target (e.g. HEAD~1)."
 T_FILE_NOT_FOUND="File not found: %s"
 T_SENSITIVE_REFUSE="Refused: '%s' looks like a sensitive file."
 T_MERGE_FAIL="Merge failed."
-T_HELP_UNKNOWN_SECTION="Unknown help section: %s"
+T_STATUS_HEADER="Repository status"
+T_STATUS_BRANCH="Branch"
+T_STATUS_REMOTE="Remote"
+T_STATUS_UPSTREAM="Upstream"
+T_STATUS_WORKING="Working tree"
+T_WORKING_CLEAN="clean"
+T_SYNC_START="Sync on branch '%s'"
+T_BACKUP_FOUND="Found %s repo(s). Starting parallel backup (max 4)..."
+T_SETUP_HEADER="Setting up dependencies"
+T_LOGIN_HEADER="GitHub authentication"
+T_TIP_HEADER="Quick tips"
 fi
 
 # ==================== ADAPTIVE UI (width, color, wrap) ====================
-# Terminal width: tput cols on a tty; fall back to stty via /dev/tty (important
-# when stdout is piped to a pager), then $COLUMNS, then default 80. Clamped 40..200.
 term_width() {
     local w="" sz=""
     if [ -t 1 ]; then
@@ -346,80 +364,183 @@ term_width() {
     echo "$w"
 }
 
-# Colors only on a tty and when NO_COLOR is unset (no-color.org convention)
-if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
-    C_SEC=$'\033[1;36m'   # section title: bold cyan
-    C_CMD=$'\033[1m'      # command name: bold
-    C_DESC=$'\033[2m'     # description: dim
+if { [ -t 1 ] || [ -n "${FORCE_COLOR:-}" ]; } && [ -z "${NO_COLOR:-}" ]; then
+    C_RESET=$'\033[0m'
+    C_BOLD=$'\033[1m'
+    C_DIM=$'\033[2m'
+    C_ITALIC=$'\033[3m'
+    C_UL=$'\033[4m'
+    C_RED=$'\033[1;31m'
+    C_GREEN=$'\033[1;32m'
+    C_YELLOW=$'\033[1;33m'
+    C_BLUE=$'\033[1;34m'
+    C_MAGENTA=$'\033[1;35m'
+    C_CYAN=$'\033[1;36m'
+    C_GRAY=$'\033[90m'
+    C_SEC=$'\033[1;36m'
+    C_CMD=$'\033[1m'
+    C_DESC=$'\033[2m'
     C_OFF=$'\033[0m'
 else
+    C_RESET=''; C_BOLD=''; C_DIM=''; C_ITALIC=''; C_UL=''
+    C_RED=''; C_GREEN=''; C_YELLOW=''; C_BLUE=''; C_MAGENTA=''; C_CYAN=''; C_GRAY=''
     C_SEC=''; C_CMD=''; C_DESC=''; C_OFF=''
+fi
+
+if [ "${GITFLUX_ASCII:-0}" = "1" ]; then
+    ICON_INFO='[i]'; ICON_OK='[+]'; ICON_FAIL='[x]'; ICON_WARN='[!]'
+    ICON_STEP='>'; ICON_DOT='*'; ICON_BRANCH='@'
+    ARROW_UP='^'; ARROW_DOWN='v'
+    BOX_H='-'; BOX_V='|'
+    BOX_TL='+'; BOX_TR='+'; BOX_BL='+'; BOX_BR='+'
+    BOX_LT='['; BOX_RT=']'
+else
+    case "${LC_ALL:-}${LC_CTYPE:-}${LANG:-}" in
+        *[Uu][Tt][Ff]-*8*|*[Uu][Tt][Ff]8*|'')
+            ICON_INFO='ℹ'; ICON_OK='✔'; ICON_FAIL='✖'; ICON_WARN='⚠'
+            ICON_STEP='▸'; ICON_DOT='•'; ICON_BRANCH='⎇'
+            ARROW_UP='↑'; ARROW_DOWN='↓'
+            BOX_H='─'; BOX_V='│'
+            BOX_TL='┌'; BOX_TR='┐'; BOX_BL='└'; BOX_BR='┘'
+            BOX_LT='「'; BOX_RT='」'
+            ;;
+        *)
+            ICON_INFO='[i]'; ICON_OK='[+]'; ICON_FAIL='[x]'; ICON_WARN='[!]'
+            ICON_STEP='>'; ICON_DOT='*'; ICON_BRANCH='@'
+            ARROW_UP='^'; ARROW_DOWN='v'
+            BOX_H='-'; BOX_V='|'
+            BOX_TL='+'; BOX_TR='+'; BOX_BL='+'; BOX_BR='+'
+            BOX_LT='['; BOX_RT=']'
+            ;;
+    esac
 fi
 
 HELP_W="$(term_width)"
 
 _t() { if [ "$GITFLUX_LANG" = "id" ]; then printf '%s' "$2"; else printf '%s' "$1"; fi; }
 
-# Wrap text to width w; continuation lines are indented by 'hang' columns (hanging indent).
-_wrap() {
-    local text="$1" w="$2" hang="$3" on="$4" off="$5"
-    local -a words
-    read -r -a words <<< "$text"
-    local line="" word first=1
-    for word in ${words[@]+"${words[@]}"}; do
-        if [ -z "$line" ]; then
-            line="$word"
-        elif [ $(( ${#line} + 1 + ${#word} )) -le "$w" ]; then
-            line="$line $word"
-        else
-            if [ "$first" -eq 1 ]; then printf '%s%s%s\n' "$on" "$line" "$off"; first=0
-            else printf '%*s%s\n' "$hang" '' "$line"; fi
-            line="$word"
-        fi
-    done
-    if [ -n "$line" ]; then
-        if [ "$first" -eq 1 ]; then printf '%s%s%s\n' "$on" "$line" "$off"
-        else printf '%*s%s\n' "$hang" '' "$line"; fi
-    fi
+# ==================== BOX-DRAWING HELP RENDERER ====================
+_visible_len() {
+    local s
+    s=$(printf '%s' "$1" | sed $'s/\033\[[0-9;]*[a-zA-Z]//g')
+    printf '%d' "${#s}"
 }
 
-help_section() {
-    local title=" $1 " i used
-    printf '\n%s──%s' "$C_SEC" "$title"
-    used=$(( ${#title} + 2 ))
-    for (( i = used; i < HELP_W; i++ )); do printf '─'; done
-    printf '%s\n' "$C_OFF"
+_repeat() {
+    local ch="$1" n="$2" out=""
+    local i
+    for (( i=0; i<n; i++ )); do out+="$ch"; done
+    printf '%s' "$out"
 }
 
-# Entry line: usage + description on one line if it fits, otherwise the description
-# goes on the next line with a 4-space indent. No line ever exceeds the terminal width.
-help_item() {
-    local u="$1" d="$2"
-    local indent=2 gap=2 ulen descw hang
-    ulen=${#u}
-    if [ $(( indent + ulen + gap + 24 )) -le "$HELP_W" ]; then
-        printf '%*s%s%s%s%*s' "$indent" '' "$C_CMD" "$u" "$C_OFF" "$gap" ''
-        descw=$(( HELP_W - indent - ulen - gap ))
-        hang=$(( indent + ulen + gap ))
-        _wrap "$d" "$descw" "$hang" "$C_DESC" "$C_OFF"
+_box_width() {
+    local w=$HELP_W
+    [ "$w" -gt 76 ] && w=76
+    [ "$w" -lt 40 ] && w=40
+    printf '%d' "$w"
+}
+
+_box_line() {
+    local content="$1"
+    local W; W=$(_box_width)
+    local inner=$(( W - 2 ))
+    local visible
+    visible=$(_visible_len "$content")
+    if [ "$visible" -le "$inner" ]; then
+        printf '%s%s%*s%s\n' "$BOX_V" "$content" $((inner - visible)) '' "$BOX_V"
     else
-        printf '%*s%s%s%s\n' "$indent" '' "$C_CMD" "$u" "$C_OFF"
-        descw=$(( HELP_W - indent - 4 ))
-        _wrap "$d" "$descw" $(( indent + 4 )) "$C_DESC" "$C_OFF"
+        local plain
+        plain=$(printf '%s' "$content" | sed $'s/\033\[[0-9;]*[a-zA-Z]//g')
+        local remaining="$plain"
+        while [ -n "$remaining" ]; do
+            local chunk="${remaining:0:$inner}"
+            remaining="${remaining:$inner}"
+            printf '%s%s%*s%s\n' "$BOX_V" "$chunk" $((inner - ${#chunk})) '' "$BOX_V"
+        done
     fi
+}
+
+_box_top() {
+    local W; W=$(_box_width)
+    printf '%s%s%s\n' "$BOX_TL" "$(_repeat "$BOX_H" $((W-2)))" "$BOX_TR"
+}
+
+_box_bottom() {
+    local W; W=$(_box_width)
+    printf '%s%s%s\n' "$BOX_BL" "$(_repeat "$BOX_H" $((W-2)))" "$BOX_BR"
+}
+
+_box_section_top() {
+    local title="$1"
+    local W; W=$(_box_width)
+    local left=5
+    local right=$(( W - 8 - ${#title} - left ))
+    [ "$right" -lt 1 ] && right=1
+    printf '%s%s %s%s%s%s %s%s\n' \
+        "$BOX_TL" \
+        "$(_repeat "$BOX_H" "$left")" \
+        "$BOX_LT" "$C_SEC$title$C_OFF" "$BOX_RT" \
+        "$(_repeat "$BOX_H" "$right")" \
+        "$BOX_TR"
+}
+
+_box_item() {
+    local cmd="$1" desc="$2"
+    _box_line "  ${C_CMD}${cmd}${C_OFF}"
+    if [ -n "$desc" ]; then
+        _box_line "    ${C_DESC}${desc}${C_OFF}"
+    fi
+}
+
+_help_header() {
+    local branch
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        branch=$(git symbolic-ref --short -q HEAD 2>/dev/null || echo "detached")
+    else
+        branch=$(_t '(not a git repo)' '(bukan repo git)')
+    fi
+    local dt
+    dt=$(date '+%Y-%m-%d %H:%M')
+
+    _box_top
+    _box_line ""
+    _box_line "  ${C_BOLD}Gitflux${C_OFF} ${C_DIM}v${VERSION}${C_OFF}"
+    _box_line "  ${C_DIM}$(_t 'GitHub CLI Assistant' 'Asisten CLI GitHub')${C_OFF}"
+    _box_line ""
+    _box_line "  ${C_DIM}$(_t 'Developer' 'Developer')${C_OFF}  : AhriDeValiente"
+    _box_line "  ${C_DIM}$(_t 'Branch' 'Branch')${C_OFF}     : ${C_CYAN}${branch}${C_OFF}"
+    _box_line "  ${C_DIM}$(_t 'Date' 'Tanggal')${C_OFF}       : ${dt}"
+    _box_line ""
+    _box_bottom
+    printf '\n'
+}
+
+_help_signature() {
+    printf '%s© Gitflux v%s | AhriDeValiente%s\n' "$C_DIM" "$VERSION" "$C_OFF"
 }
 
 # ==================== UI FUNCTIONS ====================
-info()  { echo "[INFO] $*"; }
-ok()    { echo "[OK] $*"; }
-fail()  { echo "[FAIL] $*" >&2; }
-warn()  { echo "[WARN] $*"; }
+info()  { printf '%s%s%s %s\n' "$C_CYAN" "$ICON_INFO" "$C_OFF" "$*"; }
+ok()    { printf '%s%s%s %s\n' "$C_GREEN" "$ICON_OK" "$C_OFF" "$*"; }
+fail()  { printf '%s%s%s %s\n' "$C_RED" "$ICON_FAIL" "$C_OFF" "$*" >&2; }
+warn()  { printf '%s%s%s %s\n' "$C_YELLOW" "$ICON_WARN" "$C_OFF" "$*"; }
+step()  { printf '%s%s%s %s%s%s\n' "$C_GRAY" "$ICON_STEP" "$C_OFF" "$C_BOLD" "$*" "$C_RESET"; }
+dim()   { printf '%s%s%s\n' "$C_DIM" "$*" "$C_RESET"; }
+
 banner() {
-    echo ""
-    printf '%sGitflux v%s%s — %s\n' "$C_CMD" "$VERSION" "$C_OFF" \
-        "$(_t 'Cross-Platform CLI (Stable)' 'CLI Lintas Platform (Stable)')"
-    printf '%sDeveloper By: AhriDeValiente%s\n' "$C_DESC" "$C_OFF"
-    echo ""
+    printf '\n'
+    printf '  %s⚡ Gitflux%s %sv%s%s %s— %s%s\n' \
+        "$C_CYAN" "$C_RESET" "$C_GRAY" "$VERSION" "$C_RESET" \
+        "$C_DIM" "$(_t 'Cross-Platform CLI (Stable)' 'CLI Lintas Platform (Stable)')" "$C_RESET"
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        local b
+        b="$(git symbolic-ref --short -q HEAD 2>/dev/null || echo 'detached')"
+        printf '  %sby AhriDeValiente • %s %s%s%s\n' \
+            "$C_DIM" "$ICON_BRANCH" "$C_BOLD" "$b" "$C_RESET"
+    else
+        printf '  %sby AhriDeValiente%s\n' "$C_DIM" "$C_RESET"
+    fi
+    printf '\n'
 }
 
 # ==================== SAFETY WRAPPERS ====================
@@ -610,6 +731,7 @@ check_deps() {
 
 install_deps() {
     local SUDO=""
+    step "$T_SETUP_HEADER"
     info "Detecting package manager & installing dependencies..."
     if [ "$OS" = "windows" ]; then
         if command -v winget >/dev/null 2>&1; then
@@ -647,6 +769,7 @@ install_deps() {
     fi
     ok "Dependencies installed."
     check_deps || return 1
+    step "$T_LOGIN_HEADER"
     if ! gh auth status &>/dev/null; then
         info "$T_LOGIN_PROMPT"
         gh auth login
@@ -697,7 +820,7 @@ cmd_deploy() {
     validate_text "$message" "commit message" yes || return 1
     check_origin || return 1
     if rebase_in_progress; then fail "$T_REBASE_IN_PROGRESS"; return 1; fi
-    info "$T_DEPLOY_START '$branch'..."
+    step "$T_DEPLOY_START '$branch'..."
     stage_and_commit "$message" || return 1
     pull_rebase "$branch" || return 1
     info "$T_PUSH_INFO"
@@ -733,6 +856,7 @@ cmd_sync() {
     local branch; branch="$(resolve_branch "${1:-}")" || return 1
     check_origin || return 1
     if rebase_in_progress; then fail "$T_REBASE_IN_PROGRESS"; return 1; fi
+    step "$(printf "$T_SYNC_START" "$branch")"
     stage_and_commit "sync: $(date '+%F %T')" "${GITFLUX_INTERACTIVE:-yes}" || return 1
     pull_rebase "$branch" || return 1
     run_git push -u origin "$branch" || { fail "$T_PUSH_FAILED"; return 1; }
@@ -742,14 +866,57 @@ cmd_sync() {
 
 cmd_status() {
     check_git || return 1
-    git status
-    echo ""
-    local url b
-    b="$(git symbolic-ref --short -q HEAD 2>/dev/null || echo '(detached)')"
+    local branch url upstream="" ahead=0 behind=0
+    local staged=0 dirty=0 untracked=0
+    branch="$(git symbolic-ref --short -q HEAD 2>/dev/null || echo '(detached)')"
     url="$(git remote get-url origin 2>/dev/null | mask_url)" || url=""
     [ -n "$url" ] || url="$T_REMOTE_NOT_SET"
-    info "Branch: $b"
-    info "Remote: $url"
+
+    if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+        upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}')"
+        local counts
+        counts="$(git rev-list --left-right --count 'HEAD...@{u}' 2>/dev/null || echo '0 0')"
+        ahead="$(printf '%s' "$counts" | awk '{print $1+0}')"
+        behind="$(printf '%s' "$counts" | awk '{print $2+0}')"
+    fi
+
+    staged=$(git diff --cached --numstat 2>/dev/null | wc -l | tr -d ' ')
+    dirty=$(git diff --name-only 2>/dev/null | wc -l | tr -d ' ')
+    untracked=$(git ls-files --others --exclude-standard 2>/dev/null | wc -l | tr -d ' ')
+
+    printf '\n'
+    step "$T_STATUS_HEADER"
+    printf '\n'
+    printf '  %s%s%s   %s%s%s\n' "$C_DIM" "$T_STATUS_BRANCH" "$C_RESET" "$C_BOLD" "$branch" "$C_RESET"
+    printf '  %s%s%s   %s\n'         "$C_DIM" "$T_STATUS_REMOTE" "$C_RESET" "$url"
+    if [ -n "$upstream" ]; then
+        local sync=""
+        [ "$ahead" -gt 0 ]  && sync="$sync${C_GREEN}${ARROW_UP}${ahead}${C_RESET} "
+        [ "$behind" -gt 0 ] && sync="$sync${C_YELLOW}${ARROW_DOWN}${behind}${C_RESET}"
+        [ -z "$sync" ] && sync="${C_DIM}${ICON_OK} up to date${C_RESET}"
+        printf '  %s%s%s %s%s%s %s\n' \
+            "$C_DIM" "$T_STATUS_UPSTREAM" "$C_RESET" \
+            "$C_GRAY" "$upstream" "$C_RESET" "$sync"
+    fi
+
+    if [ "$staged" -eq 0 ] && [ "$dirty" -eq 0 ] && [ "$untracked" -eq 0 ]; then
+        printf '  %s%s%s %s%s%s%s\n' \
+            "$C_DIM" "$T_STATUS_WORKING" "$C_RESET" \
+            "$C_GREEN" "$ICON_OK" "$C_RESET" \
+            " $T_WORKING_CLEAN"
+    else
+        local summary=""
+        [ "$staged" -gt 0 ]    && summary="$summary ${staged} ${C_DIM}staged${C_RESET}"
+        [ "$dirty" -gt 0 ]     && summary="$summary ${dirty} ${C_DIM}modified${C_RESET}"
+        [ "$untracked" -gt 0 ] && summary="$summary ${untracked} ${C_DIM}untracked${C_RESET}"
+        printf '  %s%s%s %s%s%s%s\n' \
+            "$C_DIM" "$T_STATUS_WORKING" "$C_RESET" \
+            "$C_YELLOW" "$ICON_WARN" "$C_RESET" \
+            "$summary"
+        printf '\n'
+        git -c color.status=always status --short 2>/dev/null || git status --short
+    fi
+    printf '\n'
 }
 
 cmd_log() {
@@ -1106,15 +1273,17 @@ cmd_actions() {
 cmd_backup() {
     local dest="${1:-$HOME/gitflux-backups}" max_jobs=4
     local -a pids=()
-    local r dir p failed=0 page=1 per_page=100
+    local r dir p failed=0 page=1 per_page=100 total=0 started
     mkdir -p -- "$dest"
-    info "$(printf "$T_BACKUP_START" "$dest")"
+    step "$(printf "$T_BACKUP_START" "$dest")"
+    started=$(date +%s)
     while true; do
         local repos
         repos=$(gh repo list --limit "$per_page" --json nameWithOwner --jq '.[].nameWithOwner' 2>/dev/null || echo "")
         [ -n "$repos" ] || break
         while IFS= read -r r; do
             [ -n "$r" ] || continue
+            total=$((total + 1))
             dir="$dest/${r#*/}"
             while [ "$(jobs -rp | wc -l | tr -d ' ')" -ge "$max_jobs" ]; do sleep 1; done
             (
@@ -1129,6 +1298,7 @@ cmd_backup() {
         page=$((page + 1))
         [ "$page" -le 10 ] || break
     done
+    info "$(printf "$T_BACKUP_FOUND" "$total")"
     for p in ${pids[@]+"${pids[@]}"}; do
         wait "$p" || failed=$((failed + 1))
     done
@@ -1136,22 +1306,26 @@ cmd_backup() {
         fail "$(printf "$T_BACKUP_FAILED" "$failed")"
         return 1
     fi
-    ok "$T_BACKUP_DONE"
+    local elapsed
+    elapsed=$(( $(date +%s) - started ))
+    ok "$(printf "$T_BACKUP_DONE" ) $((total - failed))/$total ${C_DIM}(${elapsed}s)${C_RESET}"
 }
 
 # ==================== STATS ====================
 cmd_stats() {
     check_git || return 1
-    echo "$T_STATS_TOP"
+    step "$T_STATS_TOP"
     git shortlog -sn --all | head -10 || true
-    echo "$T_STATS_LINES"
+    echo ""
+    step "$T_STATS_LINES"
     if [ -n "$(git ls-files | head -n 1)" ]; then
         git ls-files -z | xargs -0 file 2>/dev/null | grep -v 'binary\|image\|executable' | \
         cut -d: -f1 | xargs cat 2>/dev/null | wc -l | tr -d ' ' || echo 0
     else
         echo 0
     fi
-    echo "$T_STATS_LANG"
+    echo ""
+    step "$T_STATS_LANG"
     git ls-files | awk -F/ '{n=$NF} n ~ /\.[^.]+$/ {sub(/.*\./,"",n); c[n]++} END{for(k in c) print c[k], k}' \
     | sort -rn | head -5 || true
 }
@@ -1182,7 +1356,7 @@ cmd_daemon() {
             trap 'exit 130' INT
             trap 'exit 143' TERM
             GITFLUX_INTERACTIVE=no
-            info "$(printf "$T_DAEMON_START" "$int")"
+            step "$(printf "$T_DAEMON_START" "$int")"
             while true; do
                 cmd_sync || true
                 sleep "$int"
@@ -1281,8 +1455,10 @@ cmd_keygen() {
     fi
     if (umask 077; ssh-keygen -t ed25519 -C "$email" -f "$key"); then
         ok "$(printf "$T_KEYGEN_OK" "$key")"
+        echo ""
         info "Public key:"
         cat -- "$key.pub"
+        echo ""
         info "$(_t 'Add it to GitHub:' 'Tambahkan ke GitHub:') gh ssh-key add \"$key.pub\""
     else
         fail "$T_KEYGEN_FAIL"
@@ -1341,101 +1517,108 @@ cmd_undo() {
 cmd_setup() { install_deps; }
 
 _help_render() {
-    local sec="${1:-all}"
-    printf '%sGitflux v%s%s — %s\n' "$C_CMD" "$VERSION" "$C_OFF" \
-        "$(_t 'GitHub CLI Assistant' 'Asisten CLI GitHub')"
-    printf '%s\n' "$(_t 'Usage: gitflux <command> [args]   |   gitflux help <section>' 'Pakai: gitflux <perintah> [arg]   |   gitflux help <bagian>')"
-    printf '%s\n' "$(_t 'Sections: basic branch history github auto setup' 'Bagian: basic branch history github auto setup')"
+    _help_header
 
-    case "$sec" in
-        all|basic)
-            help_section "$(_t 'BASIC COMMANDS' 'PERINTAH DASAR')"
-            help_item 'deploy "msg" [branch]' "$(_t 'Stage, commit, push' 'Stage, commit, push')"
-            help_item 'push [branch]' "$(_t 'Push to remote' 'Push ke remote')"
-            help_item 'pull [branch]' "$(_t 'Pull from remote' 'Pull dari remote')"
-            help_item 'sync [branch]' "$(_t 'Commit, pull --rebase, push' 'Commit, pull --rebase, push')"
-            help_item 'status' "$(_t 'Repo status + branch/remote info' 'Status repo + info branch/remote')"
-            help_item 'log [count]' "$(_t 'Commit history (default 20)' 'Riwayat commit (default 20)')"
-            help_item 'diff [--cached]' "$(_t 'Show changes' 'Lihat perubahan')"
-            help_item 'stash list|save|pop|apply|drop' "$(_t 'Temporary stash' 'Simpan sementara')"
-            help_item 'tag list|create|push|delete' "$(_t 'Manage tags (create -m = annotated)' 'Kelola tag (create -m = annotated)')"
-            help_item 'remote show|add|set|rename|delete' "$(_t 'Manage remotes' 'Kelola remote')"
-            help_item 'init [name]' "$(_t 'Create new repo' 'Buat repo baru')"
-            ;;
-    esac
-    case "$sec" in
-        all|branch)
-            help_section "$(_t 'BRANCH & MERGE' 'BRANCH & MERGE')"
-            help_item 'branch list|create|switch|delete|rename' "$(_t 'Manage branches' 'Kelola branch')"
-            help_item 'merge <branch> [--no-ff|--squash]' "$(_t 'Merge branch' 'Gabungkan branch')"
-            help_item 'fetch' "$(_t 'Fetch all remotes + prune' 'Fetch semua remote + prune')"
-            ;;
-    esac
-    case "$sec" in
-        all|history)
-            help_section "$(_t 'REWRITE HISTORY' 'REWRITE HISTORY')"
-            help_item 'reset soft|hard [target]' "$(_t 'Reset to commit' 'Reset ke commit')"
-            help_item 'reflog' "$(_t 'HEAD recovery' 'Penyelamat HEAD')"
-            help_item 'squash [count]' "$(_t 'Squash last N commits' 'Gabung N commit terakhir')"
-            help_item 'rebase [branch]' "$(_t 'Rebase onto branch' 'Rebase ke branch')"
-            help_item 'cherry-pick <commit>' "$(_t 'Pick a commit' 'Ambil commit')"
-            help_item 'bisect start|good|bad|reset' "$(_t 'Find bug commit' 'Cari commit bug')"
-            ;;
-    esac
-    case "$sec" in
-        all|github)
-            help_section 'GITHUB API'
-            help_item 'repo <name> [public|private]' "$(_t 'Create GitHub repo' 'Buat repo GitHub')"
-            help_item 'clone <user/repo> [--depth N] [--branch b]' "$(_t 'Clone repo' 'Clone repo')"
-            help_item 'gist list|create|edit|delete' "$(_t 'Manage Gists' 'Kelola Gist')"
-            help_item 'issue list|create|close|view' "$(_t 'Manage Issues' 'Kelola Issue')"
-            help_item 'pr list|create|merge|checkout|review' "$(_t 'Manage Pull Requests' 'Kelola Pull Request')"
-            help_item 'release list|create|delete' "$(_t 'Manage Releases' 'Kelola Release')"
-            help_item 'actions list|watch|trigger' "$(_t 'GitHub Actions' 'GitHub Actions')"
-            ;;
-    esac
-    case "$sec" in
-        all|auto)
-            help_section "$(_t 'AUTOMATION' 'AUTOMASI')"
-            help_item 'backup [folder]' "$(_t 'Backup all repos (parallel)' 'Backup semua repo (paralel)')"
-            help_item 'stats' "$(_t 'Contribution stats' 'Statistik kontribusi')"
-            help_item 'daemon start|stop|status|restart [sec]' "$(_t 'Auto-sync daemon' 'Daemon auto-sync')"
-            help_item 'webhook' "$(_t 'Test webhook (WEBHOOK_URL)' 'Uji webhook (WEBHOOK_URL)')"
-            ;;
-    esac
-    case "$sec" in
-        all|setup)
-            help_section "$(_t 'SETUP & CONFIG' 'SETUP & CONFIG')"
-            help_item 'setup' "$(_t 'Install dependencies' 'Install dependensi')"
-            help_item 'config show|set|remote' "$(_t 'Configure git (set --local = per-repo)' 'Konfigurasi git (set --local = per-repo)')"
-            help_item 'undo commit|file|hard' "$(_t 'Undo changes' 'Batalkan perubahan')"
-            help_item 'keygen [email] [--force]' "$(_t 'Generate SSH key' 'Buat kunci SSH')"
-            help_item 'help [section]' "$(_t 'This help' 'Bantuan ini')"
-            ;;
-    esac
-    case "$sec" in
-        all)
-            help_section "$(_t 'TIPS' 'TIPS')"
-            help_item 'export GITFLUX_LANG=id|en' "$(_t 'Switch language' 'Ganti bahasa')"
-            help_item 'export WEBHOOK_URL=https://...' "$(_t 'Enable notifications' 'Aktifkan notifikasi')"
-            help_item 'export GITFLUX_NOPAGER=1' "$(_t 'Disable pager (less)' 'Matikan pager (less)')"
-            help_item 'export NO_COLOR=1' "$(_t 'Disable colors' 'Matikan warna')"
-            help_item 'alias gf=gitflux' "$(_t 'Short alias in ~/.bashrc' 'Alias pendek di ~/.bashrc')"
-            ;;
-    esac
+    # ─── BASIC COMMANDS ────────────────────────────────────────
+    _box_section_top "$(_t 'BASIC COMMANDS' 'PERINTAH DASAR')"
+    _box_line ""
+    _box_item 'deploy "msg" [branch]'          "$(_t 'Stage, commit, pull --rebase, push' 'Stage, commit, pull --rebase, push')"
+    _box_item 'push [branch]'                   "$(_t 'Push to remote' 'Push ke remote')"
+    _box_item 'pull [branch]'                   "$(_t 'Pull from remote' 'Pull dari remote')"
+    _box_item 'sync [branch]'                   "$(_t 'Commit, pull --rebase, push' 'Commit, pull --rebase, push')"
+    _box_item 'status'                          "$(_t 'Repo status + branch/remote info' 'Status repo + info branch/remote')"
+    _box_item 'log [count]'                     "$(_t 'Commit history (default 20)' 'Riwayat commit (default 20)')"
+    _box_item 'diff [--cached]'                 "$(_t 'Show changes' 'Lihat perubahan')"
+    _box_item 'stash list|save|pop|apply|drop'  "$(_t 'Temporary stash' 'Simpan sementara')"
+    _box_item 'tag list|create|push|delete'     "$(_t 'Manage tags (create -m = annotated)' 'Kelola tag (create -m = annotated)')"
+    _box_item 'remote show|add|set|rename|delete' "$(_t 'Manage remotes' 'Kelola remote')"
+    _box_item 'init [name]'                     "$(_t 'Create new repo' 'Buat repo baru')"
+    _box_line ""
+    _box_bottom
     printf '\n'
+
+    # ─── BRANCH & MERGE ────────────────────────────────────────
+    _box_section_top "$(_t 'BRANCH & MERGE' 'BRANCH & MERGE')"
+    _box_line ""
+    _box_item 'branch list|create|switch|delete|rename' "$(_t 'Manage branches' 'Kelola branch')"
+    _box_item 'merge <branch> [--no-ff|--squash]'       "$(_t 'Merge branch' 'Gabungkan branch')"
+    _box_item 'fetch'                                    "$(_t 'Fetch all remotes + prune' 'Fetch semua remote + prune')"
+    _box_line ""
+    _box_bottom
+    printf '\n'
+
+    # ─── REWRITE HISTORY ───────────────────────────────────────
+    _box_section_top "$(_t 'REWRITE HISTORY' 'REWRITE HISTORY')"
+    _box_line ""
+    _box_item 'reset soft|hard [target]'    "$(_t 'Reset to commit' 'Reset ke commit')"
+    _box_item 'reflog'                       "$(_t 'HEAD recovery' 'Penyelamat HEAD')"
+    _box_item 'squash [count]'               "$(_t 'Squash last N commits' 'Gabung N commit terakhir')"
+    _box_item 'rebase [branch]'              "$(_t 'Rebase onto branch' 'Rebase ke branch')"
+    _box_item 'cherry-pick <commit>'         "$(_t 'Pick a commit' 'Ambil commit')"
+    _box_item 'bisect start|good|bad|reset'  "$(_t 'Find bug commit' 'Cari commit bug')"
+    _box_line ""
+    _box_bottom
+    printf '\n'
+
+    # ─── GITHUB API ────────────────────────────────────────────
+    _box_section_top 'GITHUB API'
+    _box_line ""
+    _box_item 'repo <name> [public|private]'                 "$(_t 'Create GitHub repo' 'Buat repo GitHub')"
+    _box_item 'clone <user/repo> [--depth N] [--branch b]'    "$(_t 'Clone repo' 'Clone repo')"
+    _box_item 'gist list|create|edit|delete'                  "$(_t 'Manage Gists' 'Kelola Gist')"
+    _box_item 'issue list|create|close|view'                  "$(_t 'Manage Issues' 'Kelola Issue')"
+    _box_item 'pr list|create|merge|checkout|review'          "$(_t 'Manage Pull Requests' 'Kelola Pull Request')"
+    _box_item 'release list|create|delete'                    "$(_t 'Manage Releases' 'Kelola Release')"
+    _box_item 'actions list|watch|trigger'                    "$(_t 'GitHub Actions' 'GitHub Actions')"
+    _box_line ""
+    _box_bottom
+    printf '\n'
+
+    # ─── AUTOMATION ────────────────────────────────────────────
+    _box_section_top "$(_t 'AUTOMATION' 'AUTOMASI')"
+    _box_line ""
+    _box_item 'backup [folder]'                        "$(_t 'Backup all repos (parallel)' 'Backup semua repo (paralel)')"
+    _box_item 'stats'                                   "$(_t 'Contribution stats' 'Statistik kontribusi')"
+    _box_item 'daemon start|stop|status|restart [sec]'  "$(_t 'Auto-sync daemon' 'Daemon auto-sync')"
+    _box_item 'webhook'                                 "$(_t 'Test webhook (WEBHOOK_URL)' 'Uji webhook (WEBHOOK_URL)')"
+    _box_line ""
+    _box_bottom
+    printf '\n'
+
+    # ─── SETUP & CONFIG ────────────────────────────────────────
+    _box_section_top "$(_t 'SETUP & CONFIG' 'SETUP & CONFIG')"
+    _box_line ""
+    _box_item 'setup'                   "$(_t 'Install dependencies' 'Install dependensi')"
+    _box_item 'config show|set|remote'   "$(_t 'Configure git (set --local = per-repo)' 'Konfigurasi git (set --local = per-repo)')"
+    _box_item 'undo commit|file|hard'    "$(_t 'Undo changes' 'Batalkan perubahan')"
+    _box_item 'keygen [email] [--force]' "$(_t 'Generate SSH key' 'Buat kunci SSH')"
+    _box_item 'help'                     "$(_t 'Show this complete help' 'Tampilkan bantuan lengkap ini')"
+    _box_line ""
+    _box_bottom
+    printf '\n'
+
+    # ─── TIPS ──────────────────────────────────────────────────
+    _box_section_top "$T_TIP_HEADER"
+    _box_line ""
+    _box_item 'export GITFLUX_LANG=id|en'        "$(_t 'Switch language' 'Ganti bahasa')"
+    _box_item 'export WEBHOOK_URL=https://...'   "$(_t 'Enable notifications' 'Aktifkan notifikasi')"
+    _box_item 'export GITFLUX_NOPAGER=1'         "$(_t 'Disable pager (less)' 'Matikan pager (less)')"
+    _box_item 'export NO_COLOR=1'                 "$(_t 'Disable colors' 'Matikan warna')"
+    _box_item 'export GITFLUX_ASCII=1'            "$(_t 'Force ASCII icons/boxes' 'Paksa ikon/kotak ASCII')"
+    _box_item 'export FORCE_COLOR=1'              "$(_t 'Force color when piped' 'Paksa warna saat dipipe')"
+    _box_item 'alias gf=gitflux'                  "$(_t 'Short alias in ~/.bashrc' 'Alias pendek di ~/.bashrc')"
+    _box_line ""
+    _box_bottom
+    printf '\n'
+
+    _help_signature
 }
 
 cmd_help() {
-    local sec="${1:-all}"
-    case "$sec" in
-        all|basic|branch|history|github|auto|setup) ;;
-        *) fail "$(printf "$T_HELP_UNKNOWN_SECTION" "$sec")"; return 1 ;;
-    esac
     if [ -t 1 ] && [ -z "${GITFLUX_NOPAGER:-}" ] && command -v less >/dev/null 2>&1; then
-        _help_render "$sec" | less -R
+        _help_render | less -R
     else
-        _help_render "$sec"
+        _help_render
     fi
 }
 
@@ -1488,7 +1671,7 @@ main() {
         config)       shift; cmd_config "$@" ;;
         undo)         shift; cmd_undo "$@" ;;
         setup)        shift; cmd_setup "$@" ;;
-        help|--help|-h) shift; cmd_help "$@" ;;
+        help|--help|-h) cmd_help ;;
         *)            fail "$T_FAIL_UNKNOWN $cmd"; info "$T_HELP_LINE"; return 1 ;;
     esac
 }
