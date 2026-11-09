@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 # Gitflux v6.2.0 — Cross-Platform GitHub CLI Assistant (Stable)
-# Developer By: Ziferd
+# Developer By: AhriDeValiente
 # Bilingual (EN / ID) — set GITFLUX_LANG=id for Indonesian
 # Adaptive terminal-width help + pager + NO_COLOR support
 # ============================================================
@@ -326,8 +326,8 @@ T_HELP_UNKNOWN_SECTION="Unknown help section: %s"
 fi
 
 # ==================== ADAPTIVE UI (width, color, wrap) ====================
-# Lebar terminal: tput cols saat tty; fallback stty via /dev/tty (penting saat
-# stdout di-pipe ke pager), lalu $COLUMNS, lalu default 80. Clamp 40..200.
+# Terminal width: tput cols on a tty; fall back to stty via /dev/tty (important
+# when stdout is piped to a pager), then $COLUMNS, then default 80. Clamped 40..200.
 term_width() {
     local w="" sz=""
     if [ -t 1 ]; then
@@ -346,11 +346,11 @@ term_width() {
     echo "$w"
 }
 
-# Warna hanya saat tty dan NO_COLOR tidak diset (konvensi no-color.org)
+# Colors only on a tty and when NO_COLOR is unset (no-color.org convention)
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
-    C_SEC=$'\033[1;36m'   # judul seksi: cyan tebal
-    C_CMD=$'\033[1m'      # nama perintah: tebal
-    C_DESC=$'\033[2m'     # deskripsi: redup
+    C_SEC=$'\033[1;36m'   # section title: bold cyan
+    C_CMD=$'\033[1m'      # command name: bold
+    C_DESC=$'\033[2m'     # description: dim
     C_OFF=$'\033[0m'
 else
     C_SEC=''; C_CMD=''; C_DESC=''; C_OFF=''
@@ -360,7 +360,7 @@ HELP_W="$(term_width)"
 
 _t() { if [ "$GITFLUX_LANG" = "id" ]; then printf '%s' "$2"; else printf '%s' "$1"; fi; }
 
-# Wrap teks ke lebar w; baris lanjutan menjorok 'hang' kolom (hanging indent).
+# Wrap text to width w; continuation lines are indented by 'hang' columns (hanging indent).
 _wrap() {
     local text="$1" w="$2" hang="$3" on="$4" off="$5"
     local -a words
@@ -391,8 +391,8 @@ help_section() {
     printf '%s\n' "$C_OFF"
 }
 
-# Baris entri: usage + deskripsi satu baris bila muat,否则 deskripsi di baris
-# berikutnya dengan indent 4. Tidak ada lagi baris yang melebihi lebar terminal.
+# Entry line: usage + description on one line if it fits, otherwise the description
+# goes on the next line with a 4-space indent. No line ever exceeds the terminal width.
 help_item() {
     local u="$1" d="$2"
     local indent=2 gap=2 ulen descw hang
@@ -418,7 +418,7 @@ banner() {
     echo ""
     printf '%sGitflux v%s%s — %s\n' "$C_CMD" "$VERSION" "$C_OFF" \
         "$(_t 'Cross-Platform CLI (Stable)' 'CLI Lintas Platform (Stable)')"
-    printf '%sDeveloper By: Ziferd%s\n' "$C_DESC" "$C_OFF"
+    printf '%sDeveloper By: AhriDeValiente%s\n' "$C_DESC" "$C_OFF"
     echo ""
 }
 
@@ -855,7 +855,7 @@ cmd_init() {
     printf 'node_modules/\n.env\n.env.*\n*.pem\n*.key\n' > "$name/.gitignore"
     run_git -C "$name" add -A || return 1
     run_git -C "$name" commit -q -m "init: first commit" \
-    || { fail "$T_COMMIT_FAILED (cek: gitflux config set user.name / user.email)"; return 1; }
+    || { fail "$T_COMMIT_FAILED ($(_t 'check' 'cek'): gitflux config set user.name / user.email)"; return 1; }
     ok "$(printf "$T_REPO_INIT" "$name")"
 }
 
@@ -1283,7 +1283,7 @@ cmd_keygen() {
         ok "$(printf "$T_KEYGEN_OK" "$key")"
         info "Public key:"
         cat -- "$key.pub"
-        info "Tambahkan ke GitHub: gh ssh-key add \"$key.pub\""
+        info "$(_t 'Add it to GitHub:' 'Tambahkan ke GitHub:') gh ssh-key add \"$key.pub\""
     else
         fail "$T_KEYGEN_FAIL"
         return 1

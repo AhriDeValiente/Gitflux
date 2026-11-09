@@ -36,7 +36,7 @@ Just run `gitflux deploy "fix: login bug"` and you're done. Humanity really look
 One command, and you're ready to go:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/Ziferd/Gitflux/main/Gitflux.sh -o $PREFIX/bin/gitflux && chmod +x $PREFIX/bin/gitflux
+curl -sL https://raw.githubusercontent.com/AhriDeValiente/Gitflux/main/Gitflux.sh -o $PREFIX/bin/gitflux && chmod +x $PREFIX/bin/gitflux
 ```
 
 Then install the dependencies:
@@ -309,7 +309,7 @@ Clone a GitHub repo, optionally shallow and/or a specific branch.
 **Example:**
 
 ```bash
-gitflux clone Ziferd/Gitflux --depth 1
+gitflux clone AhriDeValiente/Gitflux --depth 1
 ```
 
 #### `gitflux gist list|create|edit|delete`
@@ -547,11 +547,11 @@ If you have an idea for a new feature or found a bug, open an issue on GitHub.
 
 ## 📄 License
 
-MIT © 2026 Ziferd
+MIT © 2026 AhriDeValiente
 
 ## 🧑‍💻 Developer
 
-**Ziferd**  
-GitHub: `@Ziferd`
+**AhriDeValiente**  
+GitHub: `@AhriDeValiente`
 
 > “Good tools make good developers. Build them, share them, improve them.”
