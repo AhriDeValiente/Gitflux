@@ -56,6 +56,7 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
 <link rel="icon" type="image/x-icon" href="/thumb/favicon.ico">
 <link rel="icon" type="image/png" sizes="512x512" href="/thumb/icon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/thumb/icon.png">
+<link rel="preload" as="image" href="/thumb/logo.png">
 
 <!-- STRUCTURED DATA (JSON-LD) -->
 <script type="application/ld+json">
@@ -65,6 +66,7 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
   "name": "Gitflux",
   "description": "GitHub CLI Assistant for Termux and Linux. 35+ Git and GitHub operations in one modern CLI tool.",
   "url": "https://gitflux.vercel.app/",
+  "image": "https://gitflux.vercel.app/thumb/logo.png",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Linux, macOS, Android (Termux)",
   "offers": {
@@ -143,6 +145,12 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
         gap: 8px;
     }
 
+    .header .logo img {
+        width: 36px;
+        height: 36px;
+        display: block;
+    }
+
     .header .logo span {
         background: var(--accent);
         color: #0d1117;
@@ -176,6 +184,14 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
     .hero {
         text-align: center;
         padding: 60px 24px 40px;
+    }
+
+    .hero .hero-logo {
+        width: 104px;
+        height: 104px;
+        display: block;
+        margin: 0 auto 18px;
+        filter: drop-shadow(0 8px 24px rgba(37, 99, 255, 0.35));
     }
 
     .hero h1 {
@@ -523,7 +539,8 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
     <!-- Header -->
     <header class="header">
         <div class="logo">
-            ⎔ Gitflux <span>v6.2.0</span>
+            <img src="/thumb/logo.png" alt="Logo Gitflux" width="36" height="36">
+            Gitflux <span>v6.2.0</span>
         </div>
         <nav class="links" aria-label="Navigasi utama">
             <a href="https://github.com/Ziferd/Gitflux" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -536,6 +553,7 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
 
         <!-- Hero -->
         <section class="hero">
+            <img class="hero-logo" src="/thumb/logo.png" alt="Logo Gitflux" width="104" height="104">
             <h1>
                 <span class="git">Git</span><span class="flux">flux</span>
             </h1>
