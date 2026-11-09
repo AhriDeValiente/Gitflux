@@ -3,7 +3,7 @@
 # Gitflux v6.2.0 — Cross-Platform GitHub CLI Assistant (Stable)
 # Developer By: AhriDeValiente
 # Bilingual (EN / ID) — set GITFLUX_LANG=id for Indonesian
-# Adaptive terminal-width help + pager + NO_COLOR support
+# Adaptive terminal-width help + NO_COLOR support
 # ============================================================
 set -euo pipefail
 GITFLUX_LANG="${GITFLUX_LANG:-en}"
@@ -1602,7 +1602,6 @@ _help_render() {
     _box_line ""
     _box_item 'export GITFLUX_LANG=id|en'        "$(_t 'Switch language' 'Ganti bahasa')"
     _box_item 'export WEBHOOK_URL=https://...'   "$(_t 'Enable notifications' 'Aktifkan notifikasi')"
-    _box_item 'export GITFLUX_NOPAGER=1'         "$(_t 'Disable pager (less)' 'Matikan pager (less)')"
     _box_item 'export NO_COLOR=1'                 "$(_t 'Disable colors' 'Matikan warna')"
     _box_item 'export GITFLUX_ASCII=1'            "$(_t 'Force ASCII icons/boxes' 'Paksa ikon/kotak ASCII')"
     _box_item 'export FORCE_COLOR=1'              "$(_t 'Force color when piped' 'Paksa warna saat dipipe')"
@@ -1615,11 +1614,8 @@ _help_render() {
 }
 
 cmd_help() {
-    if [ -t 1 ] && [ -z "${GITFLUX_NOPAGER:-}" ] && command -v less >/dev/null 2>&1; then
-        _help_render | less -R
-    else
-        _help_render
-    fi
+    # Print directly to terminal without pager
+    _help_render
 }
 
 # ==================== MAIN DISPATCHER ====================
