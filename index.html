@@ -66,7 +66,7 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
   "description": "GitHub CLI Assistant for Termux and Linux. 35+ Git and GitHub operations in one modern CLI tool.",
   "url": "https://gitflux.vercel.app/",
   "applicationCategory": "DeveloperApplication",
-  "operatingSystem": "Linux, Android (Termux)",
+  "operatingSystem": "Linux, macOS, Android (Termux)",
   "offers": {
     "@type": "Offer",
     "price": "0",
@@ -77,14 +77,16 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
     "name": "Ziferd",
     "url": "https://github.com/Ziferd"
   },
-  "softwareVersion": "6.0.0",
+  "softwareVersion": "6.2.0",
   "featureList": [
     "One-command deploy",
     "Backup all repositories",
     "Undo commits and restore files",
     "Auto-sync daemon",
+    "Sensitive-file guard",
+    "Adaptive help with pager and NO_COLOR support",
     "Bilingual EN/ID",
-    "Input validation"
+    "Strict input validation"
   ],
   "license": "https://github.com/Ziferd/Gitflux/blob/main/LICENSE"
 }
@@ -281,12 +283,14 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
     .terminal-preview .body .prompt { color: var(--accent-green); }
     .terminal-preview .body .cmd    { color: var(--accent); }
     .terminal-preview .body .arg    { color: var(--accent-purple); }
+    .terminal-preview .body .sec    { color: #39c5cf; font-weight: 700; }
 
     .terminal-preview .body .output {
         color: var(--text-secondary);
         margin-top: 8px;
         padding-left: 12px;
         border-left: 2px solid var(--border);
+        white-space: nowrap;
     }
 
     /* ── Badge strip ─────────────────────── */
@@ -519,7 +523,7 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
     <!-- Header -->
     <header class="header">
         <div class="logo">
-            ⎔ Gitflux <span>v6.0.0</span>
+            ⎔ Gitflux <span>v6.2.0</span>
         </div>
         <nav class="links" aria-label="Navigasi utama">
             <a href="https://github.com/Ziferd/Gitflux" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -544,8 +548,9 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
 
         <!-- Badge strip -->
         <div class="badge-strip">
-            <div class="badge"><span class="dot-live"></span> v6.0.0 Stable</div>
-            <div class="badge">🔒 Input Validation</div>
+            <div class="badge"><span class="dot-live"></span> v6.2.0 Stable</div>
+            <div class="badge">🔒 Strict Input Validation</div>
+            <div class="badge">🛡️ Sensitive-File Guard</div>
             <div class="badge">🌐 Bilingual EN/ID</div>
             <div class="badge">📦 35+ Features</div>
             <div class="badge">🐧 Linux · macOS · Termux</div>
@@ -565,26 +570,29 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
                     [INFO] Deploy ke branch 'main'...<br>
                     [OK] File di-stage.<br>
                     [OK] Commit: fix: bug login<br>
+                    [INFO] Menarik perubahan terbaru...<br>
                     [OK] Pull berhasil.<br>
+                    [INFO] Mendorong ke remote...<br>
                     [OK] Push berhasil.<br>
                     [OK] Deploy selesai.
                 </div>
                 <br>
                 <span class="prompt">~ $</span> <span class="cmd">gitflux</span> <span class="arg">backup</span><br>
                 <div class="output">
-                    [INFO] Mem-backup semua repo ke '/home/gitflux-backups'...<br>
+                    [INFO] Mem-backup semua repo ke '/home/user/gitflux-backups'...<br>
                     [OK] Backup selesai.
                 </div>
                 <br>
                 <span class="prompt">~ $</span> <span class="cmd">gitflux</span> <span class="arg">help</span><br>
                 <div class="output">
-                    Gitflux v6.0.0 — GitHub CLI Assistant<br>
-                    Developer By: Ziferd<br>
+                    Gitflux v6.2.0 — Asisten CLI GitHub<br>
+                    Pakai: gitflux &lt;perintah&gt; [arg] &nbsp;|&nbsp; gitflux help &lt;bagian&gt;<br>
+                    Bagian: basic branch history github auto setup<br>
                     &nbsp;<br>
-                    Perintah Dasar:<br>
-                    &nbsp;&nbsp;gitflux deploy  "pesan" [branch]   — Stage, commit, push<br>
-                    &nbsp;&nbsp;gitflux push    [branch]           — Push ke remote<br>
-                    &nbsp;&nbsp;gitflux pull    [branch]           — Pull dari remote<br>
+                    <span class="sec">── PERINTAH DASAR ──────────────────────</span><br>
+                    &nbsp;&nbsp;deploy "msg" [branch] &nbsp;Stage, commit, push<br>
+                    &nbsp;&nbsp;push [branch] &nbsp;Push ke remote<br>
+                    &nbsp;&nbsp;pull [branch] &nbsp;Pull dari remote<br>
                     &nbsp;&nbsp;...
                 </div>
             </div>
@@ -597,12 +605,12 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
                 <div class="feature-card">
                     <div class="icon" aria-hidden="true">🚀</div>
                     <h3>One-Command Deploy</h3>
-                    <p>Stage, commit, pull rebase, dan push dalam satu baris perintah.</p>
+                    <p>Stage, commit, pull rebase, dan push dalam satu baris perintah. Berjalan di branch aktif dan tidak pernah force-push.</p>
                 </div>
                 <div class="feature-card">
                     <div class="icon" aria-hidden="true">💾</div>
                     <h3>Backup Semua Repo</h3>
-                    <p>Cadangkan seluruh repositori GitHub kamu ke folder lokal secara paralel.</p>
+                    <p>Cadangkan seluruh repositori GitHub kamu ke folder lokal secara paralel (maks. 4 job sekaligus).</p>
                 </div>
                 <div class="feature-card">
                     <div class="icon" aria-hidden="true">⏪</div>
@@ -612,12 +620,22 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
                 <div class="feature-card">
                     <div class="icon" aria-hidden="true">🔄</div>
                     <h3>Daemon Auto-Sync</h3>
-                    <p>Sinkronisasi otomatis setiap N detik dengan PID lockfile agar tidak dobel.</p>
+                    <p>Sinkronisasi otomatis setiap N detik dengan lock per repo (start/stop/status/restart) agar tidak berjalan ganda.</p>
                 </div>
                 <div class="feature-card">
                     <div class="icon" aria-hidden="true">🔒</div>
-                    <h3>Input Validation</h3>
-                    <p>Karakter berbahaya diblokir di semua command. Commit message tetap fleksibel.</p>
+                    <h3>Validasi Input Ketat</h3>
+                    <p>Karakter kontrol ditolak; nama branch/tag lewat <code>git check-ref-format</code>; URL hanya https/ssh/git@. Commit message tetap fleksibel.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">🛡️</div>
+                    <h3>Proteksi File Sensitif</h3>
+                    <p>File seperti <code>.env</code>, <code>*.pem</code>, <code>*.key</code>, dan kunci SSH diberi peringatan sebelum di-commit dan ditolak untuk gist.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">🖥️</div>
+                    <h3>Help Adaptif</h3>
+                    <p>Menyesuaikan lebar terminal, memakai pager, mendukung <code>NO_COLOR</code>, dan bisa dibuka per bagian: <code>gitflux help github</code>.</p>
                 </div>
                 <div class="feature-card">
                     <div class="icon" aria-hidden="true">🌐</div>
@@ -634,12 +652,12 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
                 Gitflux adalah GitHub CLI assistant yang dirancang untuk pengguna Termux dan Linux
                 yang ingin mengotomatiskan operasi Git sehari-hari tanpa harus menghafal puluhan
                 perintah. Cocok untuk developer mobile yang mengelola repositori GitHub langsung
-                dari perangkat Android.
+                dari perangkat Android. Berjalan juga di macOS, dan sebagian di Windows (Git Bash / MSYS2 / Cygwin).
             </p>
             <h3>Untuk Siapa?</h3>
             <ul>
                 <li>Developer yang bekerja di Termux / Android</li>
-                <li>Pengguna Linux yang ingin workflow Git lebih cepat</li>
+                <li>Pengguna Linux dan macOS yang ingin workflow Git lebih cepat</li>
                 <li>Pemula yang ingin belajar Git dengan perintah sederhana</li>
             </ul>
         </section>
@@ -649,28 +667,36 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
             <h2 id="changelog-heading">📋 Changelog</h2>
             <ul class="changelog-list">
                 <li>
-                    <span class="tag tag-fix">FIX</span>
-                    <span>String hardcoded <code>"Commit dibatalkan"</code> dan <code>"tidak disetel"</code> di <code>cmd_sync</code> &amp; <code>cmd_status</code> diganti ke sistem bilingual <code>T_*</code>.</span>
-                </li>
-                <li>
-                    <span class="tag tag-improved">IMPROVED</span>
-                    <span><code>validate_arg()</code> sekarang mengizinkan karakter <code>$</code> khusus untuk commit message, agar pesan seperti <code>"fix: update $PATH"</code> tidak diblokir.</span>
+                    <span class="tag tag-new">NEW</span>
+                    <span>Help adaptif: menyesuaikan lebar terminal, pager <code>less</code>, dukungan <code>NO_COLOR</code>, bagian bantuan (<code>gitflux help &lt;bagian&gt;</code>), dan opsi <code>GITFLUX_NOPAGER</code>.</span>
                 </li>
                 <li>
                     <span class="tag tag-new">NEW</span>
-                    <span>Fungsi <code>validate_arg()</code> terpusat diterapkan di seluruh command — branch, tag, remote, PR, issue, config, dan lainnya.</span>
-                </li>
-                <li>
-                    <span class="tag tag-fix">FIX</span>
-                    <span><code>cmd_init</code> kini menggunakan <code>git -C</code> — tidak ada lagi masalah <code>cd</code> dalam subshell.</span>
-                </li>
-                <li>
-                    <span class="tag tag-fix">FIX</span>
-                    <span><code>fail()</code> sekarang output ke <code>stderr</code> (<code>&gt;&amp;2</code>) agar error tidak tercampur dengan stdout.</span>
+                    <span>Deteksi file sensitif (<code>.env</code>, <code>*.pem</code>, <code>*.key</code>, kunci SSH, dll.) saat staging dan penolakan saat membuat gist.</span>
                 </li>
                 <li>
                     <span class="tag tag-improved">IMPROVED</span>
-                    <span>Daemon menggunakan PID-based lockfile — mencegah instance ganda bahkan setelah crash.</span>
+                    <span>Validasi input kini ketat dan spesifik per jenis: karakter kontrol, nama branch/tag (<code>git check-ref-format</code>), revisi commit, URL (https/ssh/git@), angka, dan ID. Karakter seperti <code>$</code> tetap aman di commit message.</span>
+                </li>
+                <li>
+                    <span class="tag tag-improved">IMPROVED</span>
+                    <span><code>deploy</code>, <code>push</code>, <code>pull</code>, dan <code>sync</code> hanya berjalan di branch aktif, memerlukan <code>origin</code>, dan menolak berjalan saat rebase/merge berlangsung.</span>
+                </li>
+                <li>
+                    <span class="tag tag-improved">IMPROVED</span>
+                    <span>Daemon kini punya subperintah <code>start|stop|status|restart</code>, lock per repo (stale lock dibersihkan otomatis), dan berjalan non-interaktif.</span>
+                </li>
+                <li>
+                    <span class="tag tag-improved">IMPROVED</span>
+                    <span><code>config set</code> memakai allowlist kunci dan opsi <code>--local</code>; <code>keygen</code> tidak menimpa kunci lama kecuali <code>--force</code> (kunci lama di-backup); URL remote disamarkan di output.</span>
+                </li>
+                <li>
+                    <span class="tag tag-improved">IMPROVED</span>
+                    <span><code>squash</code> memvalidasi jumlah commit dan working tree bersih; <code>reset hard</code> wajib target eksplisit; <code>merge</code> mendukung <code>--no-ff</code> / <code>--squash</code>; <code>clone</code> mendukung <code>--depth</code> / <code>--branch</code>; <code>webhook</code> mencoba ulang hingga 3 kali.</span>
+                </li>
+                <li>
+                    <span class="tag tag-fix">FIX</span>
+                    <span><code>fail()</code> output ke <code>stderr</code> agar error tidak tercampur dengan stdout; <code>cmd_init</code> memakai <code>git -C</code> tanpa <code>cd</code> dalam subshell.</span>
                 </li>
             </ul>
         </section>
@@ -684,6 +710,10 @@ content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and
             </div>
             <p style="margin-top:12px;color:var(--text-secondary);font-size:0.85em;">
                 Lalu ketik <code style="color:var(--accent);">gitflux help</code> untuk melihat semua perintah.
+            </p>
+            <p style="margin-top:8px;color:var(--text-secondary);font-size:0.85em;">
+                Di Linux/macOS tanpa <code>$PREFIX</code>, ganti <code>$PREFIX/bin</code> dengan <code>/usr/local/bin</code> dan gunakan <code>sudo</code>.
+                <code>gitflux setup</code> memasang <code>git</code>, <code>gh</code>, <code>curl</code>, dan <code>openssh</code>.
             </p>
         </section>
 
