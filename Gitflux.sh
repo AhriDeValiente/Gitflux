@@ -311,6 +311,8 @@ T_BACKUP_FOUND="Ditemukan %s repo. Memulai backup paralel (maks 4)..."
 T_SETUP_HEADER="Menyiapkan dependensi"
 T_LOGIN_HEADER="Autentikasi GitHub"
 T_TIP_HEADER="Tips cepat"
+T_HOW_TO_USE="Cara pakai:"
+T_EXAMPLE="Contoh:"
 else
 T_INVALID_CHARS="Invalid characters detected in %s."
 T_NO_ORIGIN="Remote 'origin' is not set. Run: gitflux remote add origin <url>"
@@ -343,6 +345,8 @@ T_BACKUP_FOUND="Found %s repo(s). Starting parallel backup (max 4)..."
 T_SETUP_HEADER="Setting up dependencies"
 T_LOGIN_HEADER="GitHub authentication"
 T_TIP_HEADER="Quick tips"
+T_HOW_TO_USE="How to use:"
+T_EXAMPLE="Example:"
 fi
 
 # ==================== ADAPTIVE UI (width, color, wrap) ====================
@@ -510,6 +514,10 @@ _help_header() {
     _box_line "  ${C_DIM}$(_t 'Developer' 'Developer')${C_OFF}  : AhriDeValiente"
     _box_line "  ${C_DIM}$(_t 'Branch' 'Branch')${C_OFF}     : ${C_CYAN}${branch}${C_OFF}"
     _box_line "  ${C_DIM}$(_t 'Date' 'Tanggal')${C_OFF}       : ${dt}"
+    _box_line ""
+    _box_line "  ${C_YELLOW}${ICON_INFO} ${C_BOLD}$T_HOW_TO_USE${C_OFF}"
+    _box_line "     ${C_CMD}gitflux <command>${C_OFF}"
+    _box_line "     ${C_DIM}$T_EXAMPLE gitflux status${C_OFF}"
     _box_line ""
     _box_bottom
     printf '\n'
