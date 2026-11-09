@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="google-site-verification" content="a8S40XRbmInH8T45zY7Acs18OqHRPsaNhvdaqhQGpOk" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Gitflux — GitHub CLI Assistant for Termux &amp; Linux | 35+ Git Operations</title>
+
+<!-- PRIMARY META -->
+<meta name="title" content="Gitflux — GitHub CLI Assistant for Termux &amp; Linux | 35+ Git Operations">
+<meta name="description"
+content="GitHub CLI assistant for Termux and Linux. Automate deploy, backup, and manage repos with 35+ Git operations. Free, open-source, bilingual EN/ID.">
+<meta name="keywords"
+content="github cli assistant, termux git tool, linux git automation, github operations cli, gitflux, github cli for android, termux developer tools, bash github script, cli github manager">
+<meta name="author" content="Ziferd">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://gitflux.vercel.app/">
+
+<!-- OPEN GRAPH / UNIVERSAL -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gitflux.vercel.app/">
+
+<meta property="og:title"
+content="Gitflux — GitHub CLI Assistant for Termux &amp; Linux">
+
+<meta property="og:description"
+content="35+ GitHub operations in one modern CLI. Deploy, backup, and manage repos with a single command.">
+
+<meta property="og:image" content="https://gitflux.vercel.app/thumb/banner.png">
+<meta property="og:image:secure_url" content="https://gitflux.vercel.app/thumb/banner.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:image:type" content="image/png">
+
+<meta property="og:site_name" content="Gitflux">
+<meta property="og:locale" content="en_US">
+
+<!-- TWITTER -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://gitflux.vercel.app/">
+
+<meta name="twitter:title"
+content="Gitflux — GitHub CLI Assistant for Termux &amp; Linux">
+
+<meta name="twitter:description"
+content="Modern GitHub CLI Assistant for Termux &amp; Linux. Deploy, backup, and manage repos with 35+ features.">
+
+<meta name="twitter:image" content="https://gitflux.vercel.app/thumb/banner.png">
+<meta name="twitter:image:alt" content="Gitflux — GitHub CLI Assistant untuk Termux &amp; Linux">
+
+<!-- DISCORD EMBED COLOR -->
+<meta name="theme-color" content="#3fb950">
+
+<!-- FAVICON (local, served from Vercel) -->
+<link rel="icon" type="image/x-icon" href="/thumb/favicon.ico">
+<link rel="icon" type="image/png" sizes="512x512" href="/thumb/icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/thumb/icon.png">
+<link rel="preload" as="image" href="/thumb/logo.png">
+
+<!-- STRUCTURED DATA (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Gitflux",
+  "description": "GitHub CLI Assistant for Termux and Linux. 35+ Git and GitHub operations in one modern CLI tool.",
+  "url": "https://gitflux.vercel.app/",
+  "image": "https://gitflux.vercel.app/thumb/logo.png",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Linux, macOS, Android (Termux)",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Ziferd",
+    "url": "https://github.com/Ziferd"
+  },
+  "softwareVersion": "6.2.0",
+  "featureList": [
+    "One-command deploy",
+    "Backup all repositories",
+    "Undo commits and restore files",
+    "Auto-sync daemon",
+    "Sensitive-file guard",
+    "Adaptive help with pager and NO_COLOR support",
+    "Bilingual EN/ID",
+    "Strict input validation"
+  ],
+  "license": "https://github.com/Ziferd/Gitflux/blob/main/LICENSE"
+}
+</script>
+
+<style>
+    :root {
+        --bg: #0d1117;
+        --card: #161b22;
+        --border: #30363d;
+        --text: #c9d1d9;
+        --text-secondary: #8b949e;
+        --accent: #58a6ff;
+        --accent-green: #3fb950;
+        --accent-orange: #d2991d;
+        --accent-purple: #a371f7;
+        --btn-green: #238636;
+        --btn-green-hover: #1a7f37;
+        --btn-green-border: #2ea043;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        min-height: 100vh;
+    }
+
+    /* ── Header ───────────────────── */
+    .header {
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .header .logo {
+        font-size: 1.4em;
+        font-weight: 700;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .header .logo img {
+        width: 36px;
+        height: 36px;
+        display: block;
+    }
+
+    .header .logo span {
+        background: var(--accent);
+        color: #0d1117;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.65em;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        font-weight: 800;
+    }
+
+    .header .links {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .header .links a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.9em;
+        transition: color 0.2s;
+    }
+
+    .header .links a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    /* ── Hero ───────────────────── */
+    .hero {
+        text-align: center;
+        padding: 60px 24px 40px;
+    }
+
+    .hero .hero-logo {
+        width: 104px;
+        height: 104px;
+        display: block;
+        margin: 0 auto 18px;
+        filter: drop-shadow(0 8px 24px rgba(37, 99, 255, 0.35));
+    }
+
+    .hero h1 {
+        font-size: 2.6em;
+        font-weight: 800;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+    }
+
+    .hero h1 .git {
+        color: var(--accent-orange);
+    }
+
+    .hero h1 .flux {
+        color: var(--accent-purple);
+    }
+
+    .hero .tagline {
+        font-size: 1.15em;
+        color: var(--text-secondary);
+        margin-bottom: 28px;
+    }
+
+    .hero .cta {
+        display: inline-flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 22px;
+        border-radius: 8px;
+        font-size: 0.95em;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid var(--border);
+    }
+
+    .btn-primary {
+        background: var(--btn-green);
+        color: #fff;
+        border-color: var(--btn-green-border);
+    }
+
+    .btn-primary:hover {
+        background: var(--btn-green-hover);
+        border-color: var(--btn-green-hover);
+    }
+
+    .btn-secondary {
+        background: var(--card);
+        color: var(--text);
+    }
+
+    .btn-secondary:hover {
+        background: #1f2937;
+        border-color: var(--accent);
+    }
+
+    /* ── Terminal Preview ───────────────────── */
+    .terminal-preview {
+        max-width: 720px;
+        margin: 0 auto 40px;
+        background: #0d1117;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .terminal-preview .titlebar {
+        background: #161b22;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .terminal-preview .titlebar .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+    }
+
+    .dot.red   { background: #f85149; }
+    .dot.yellow{ background: #d2991d; }
+    .dot.green { background: #3fb950; }
+
+    .terminal-preview .body {
+        padding: 16px 20px;
+        font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+        font-size: 0.82em;
+        line-height: 1.7;
+        overflow-x: auto;
+        color: #c9d1d9;
+    }
+
+    .terminal-preview .body .prompt { color: var(--accent-green); }
+    .terminal-preview .body .cmd    { color: var(--accent); }
+    .terminal-preview .body .arg    { color: var(--accent-purple); }
+    .terminal-preview .body .sec    { color: #39c5cf; font-weight: 700; }
+
+    .terminal-preview .body .output {
+        color: var(--text-secondary);
+        margin-top: 8px;
+        padding-left: 12px;
+        border-left: 2px solid var(--border);
+        white-space: nowrap;
+    }
+
+    /* ── Badge strip ─────────────────────── */
+    .badge-strip {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 0 24px 40px;
+    }
+
+    .badge {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 5px 14px;
+        font-size: 0.78em;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .badge .dot-live {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent-green);
+    }
+
+    /* ── Features Grid ───────────────────── */
+    .features {
+        max-width: 900px;
+        margin: 0 auto 50px;
+        padding: 0 24px;
+    }
+
+    .features h2 {
+        font-size: 1.5em;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+    }
+
+    .feature-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        transition: border-color 0.2s;
+    }
+
+    .feature-card:hover {
+        border-color: var(--accent);
+    }
+
+    .feature-card .icon {
+        font-size: 1.6em;
+        margin-bottom: 10px;
+    }
+
+    .feature-card h3 {
+        font-size: 1em;
+        margin-bottom: 6px;
+    }
+
+    .feature-card p {
+        font-size: 0.85em;
+        color: var(--text-secondary);
+    }
+
+    /* ── About Section ───────────────────── */
+    .about-section {
+        max-width: 720px;
+        margin: 0 auto 50px;
+        padding: 0 24px;
+    }
+
+    .about-section h2 {
+        font-size: 1.5em;
+        margin-bottom: 16px;
+        text-align: center;
+    }
+
+    .about-section p {
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+    }
+
+    .about-section h3 {
+        font-size: 1.1em;
+        margin-top: 16px;
+        margin-bottom: 8px;
+    }
+
+    .about-section ul {
+        color: var(--text-secondary);
+        padding-left: 20px;
+    }
+
+    /* ── Changelog ───────────────────── */
+    .changelog-section {
+        max-width: 720px;
+        margin: 0 auto 50px;
+        padding: 0 24px;
+    }
+
+    .changelog-section h2 {
+        font-size: 1.5em;
+        margin-bottom: 16px;
+        text-align: center;
+    }
+
+    .changelog-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .changelog-list li {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 0.87em;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .changelog-list .tag {
+        font-size: 0.75em;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+        margin-top: 1px;
+    }
+
+    .tag-fix      { background: #1f3b2a; color: #3fb950; }
+    .tag-new      { background: #1a2f4a; color: #58a6ff; }
+    .tag-improved { background: #2d2415; color: #d2991d; }
+    .tag-rebrand  { background: #2d1f4a; color: #c9a0ff; }
+
+    /* ── Quick Install ───────────────────── */
+    .install-section {
+        max-width: 720px;
+        margin: 0 auto 50px;
+        padding: 0 24px;
+        text-align: center;
+    }
+
+    .install-section h2 {
+        font-size: 1.5em;
+        margin-bottom: 16px;
+    }
+
+    .install-section .code-block {
+        background: #0d1117;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px 18px;
+        font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+        font-size: 0.82em;
+        overflow-x: auto;
+        text-align: left;
+        color: var(--accent);
+        position: relative;
+    }
+
+    .install-section .code-block code {
+        display: block;
+        padding-right: 70px;
+    }
+
+    .install-section .code-block .copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75em;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .install-section .code-block .copy-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    /* ── Footer ───────────────────── */
+    .footer {
+        text-align: center;
+        padding: 30px 24px;
+        border-top: 1px solid var(--border);
+        color: var(--text-secondary);
+        font-size: 0.82em;
+    }
+
+    .footer a {
+        color: var(--accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .footer a:hover {
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+    }
+
+    /* ── Responsive ───────────────────── */
+    @media (max-width: 600px) {
+        .hero h1 { font-size: 1.8em; }
+        .terminal-preview .body { font-size: 0.7em; padding: 12px 14px; }
+    }
+</style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <img src="/thumb/logo.png" alt="Logo Gitflux" width="36" height="36">
+            Gitflux <span>v6.2.0</span>
+        </div>
+        <nav class="links" aria-label="Navigasi utama">
+            <a href="https://github.com/Ziferd/Gitflux" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="https://github.com/Ziferd/Gitflux#readme" target="_blank" rel="noopener noreferrer">Dokumentasi</a>
+            <a href="https://github.com/Ziferd/Gitflux/releases" target="_blank" rel="noopener noreferrer">Releases</a>
+        </nav>
+    </header>
+
+    <main>
+
+        <!-- Hero -->
+        <section class="hero">
+            <img class="hero-logo" src="/thumb/logo.png" alt="Logo Gitflux" width="104" height="104">
+            <h1>
+                <span class="git">Git</span><span class="flux">flux</span>
+            </h1>
+            <p class="tagline">GitHub CLI Assistant untuk Termux &amp; Linux — deploy, backup, kelola repo dalam satu perintah.</p>
+            <div class="cta">
+                <a href="#install" class="btn btn-primary">⬇ Quick Install</a>
+                <a href="https://github.com/Ziferd/Gitflux" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Lihat di GitHub</a>
+            </div>
+        </section>
+
+        <!-- Badge strip -->
+        <div class="badge-strip">
+            <div class="badge"><span class="dot-live"></span> v6.2.0 Stable</div>
+            <div class="badge">🔒 Strict Input Validation</div>
+            <div class="badge">🛡️ Sensitive-File Guard</div>
+            <div class="badge">🌐 Bilingual EN/ID</div>
+            <div class="badge">📦 35+ Features</div>
+            <div class="badge">🐧 Linux · macOS · Termux</div>
+        </div>
+
+        <!-- Terminal Preview -->
+        <div class="terminal-preview" role="img" aria-label="Contoh keluaran terminal Gitflux: menjalankan deploy, backup, dan help">
+            <div class="titlebar" aria-hidden="true">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+                <span style="color:#8b949e;font-size:0.8em;">Termux — gitflux</span>
+            </div>
+            <div class="body">
+                <span class="prompt">~ $</span> <span class="cmd">gitflux</span> <span class="arg">deploy</span> <span class="arg">"fix: bug login"</span><br>
+                <div class="output">
+                    [INFO] Deploy ke branch 'main'...<br>
+                    [OK] File di-stage.<br>
+                    [OK] Commit: fix: bug login<br>
+                    [INFO] Menarik perubahan terbaru...<br>
+                    [OK] Pull berhasil.<br>
+                    [INFO] Mendorong ke remote...<br>
+                    [OK] Push berhasil.<br>
+                    [OK] Deploy selesai.
+                </div>
+                <br>
+                <span class="prompt">~ $</span> <span class="cmd">gitflux</span> <span class="arg">backup</span><br>
+                <div class="output">
+                    [INFO] Mem-backup semua repo ke '/home/user/gitflux-backups'...<br>
+                    [OK] Backup selesai.
+                </div>
+                <br>
+                <span class="prompt">~ $</span> <span class="cmd">gitflux</span> <span class="arg">help</span><br>
+                <div class="output">
+                    Gitflux v6.2.0 — Asisten CLI GitHub<br>
+                    Pakai: gitflux &lt;perintah&gt; [arg] &nbsp;|&nbsp; gitflux help &lt;bagian&gt;<br>
+                    Bagian: basic branch history github auto setup<br>
+                    &nbsp;<br>
+                    <span class="sec">── PERINTAH DASAR ──────────────────────</span><br>
+                    &nbsp;&nbsp;deploy "msg" [branch] &nbsp;Stage, commit, push<br>
+                    &nbsp;&nbsp;push [branch] &nbsp;Push ke remote<br>
+                    &nbsp;&nbsp;pull [branch] &nbsp;Pull dari remote<br>
+                    &nbsp;&nbsp;...
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <section class="features" aria-labelledby="features-heading">
+            <h2 id="features-heading">✨ Fitur Unggulan</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">🚀</div>
+                    <h3>One-Command Deploy</h3>
+                    <p>Stage, commit, pull rebase, dan push dalam satu baris perintah. Berjalan di branch aktif dan tidak pernah force-push.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">💾</div>
+                    <h3>Backup Semua Repo</h3>
+                    <p>Cadangkan seluruh repositori GitHub kamu ke folder lokal secara paralel (maks. 4 job sekaligus).</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">⏪</div>
+                    <h3>Undo Apapun</h3>
+                    <p>Batalkan commit, pulihkan file, atau reset total dengan konfirmasi aman.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">🔄</div>
+                    <h3>Daemon Auto-Sync</h3>
+                    <p>Sinkronisasi otomatis setiap N detik dengan lock per repo (start/stop/status/restart) agar tidak berjalan ganda.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">🔒</div>
+                    <h3>Validasi Input Ketat</h3>
+                    <p>Karakter kontrol ditolak; nama branch/tag lewat <code>git check-ref-format</code>; URL hanya https/ssh/git@. Commit message tetap fleksibel.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">🛡️</div>
+                    <h3>Proteksi File Sensitif</h3>
+                    <p>File seperti <code>.env</code>, <code>*.pem</code>, <code>*.key</code>, dan kunci SSH diberi peringatan sebelum di-commit dan ditolak untuk gist.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">🖥️</div>
+                    <h3>Help Adaptif</h3>
+                    <p>Menyesuaikan lebar terminal, memakai pager, mendukung <code>NO_COLOR</code>, dan bisa dibuka per bagian: <code>gitflux help github</code>.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon" aria-hidden="true">🌐</div>
+                    <h3>Bilingual (EN/ID)</h3>
+                    <p>Dukung Bahasa Indonesia dan Inggris. Ganti dengan <code>export GITFLUX_LANG=id</code>.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- About -->
+        <section class="about-section" aria-labelledby="about-heading">
+            <h2 id="about-heading">Tentang Gitflux</h2>
+            <p>
+                Gitflux adalah GitHub CLI assistant yang dirancang untuk pengguna Termux dan Linux
+                yang ingin mengotomatiskan operasi Git sehari-hari tanpa harus menghafal puluhan
+                perintah. Cocok untuk developer mobile yang mengelola repositori GitHub langsung
+                dari perangkat Android. Berjalan juga di macOS, dan sebagian di Windows (Git Bash / MSYS2 / Cygwin).
+            </p>
+            <h3>Untuk Siapa?</h3>
+            <ul>
+                <li>Developer yang bekerja di Termux / Android</li>
+                <li>Pengguna Linux dan macOS yang ingin workflow Git lebih cepat</li>
+                <li>Pemula yang ingin belajar Git dengan perintah sederhana</li>
+            </ul>
+        </section>
+
+        <!-- Changelog -->
+        <section class="changelog-section" aria-labelledby="changelog-heading">
+            <h2 id="changelog-heading">📋 Changelog</h2>
+            <ul class="changelog-list">
+                <li>
+                    <span class="tag tag-new">NEW</span>
+                    <span>Help adaptif: menyesuaikan lebar terminal, pager <code>less</code>, dukungan <code>NO_COLOR</code>, bagian bantuan (<code>gitflux help &lt;bagian&gt;</code>), dan opsi <code>GITFLUX_NOPAGER</code>.</span>
+                </li>
+                <li>
+                    <span class="tag tag-new">NEW</span>
+                    <span>Deteksi file sensitif (<code>.env</code>, <code>*.pem</code>, <code>*.key</code>, kunci SSH, dll.) saat staging dan penolakan saat membuat gist.</span>
+                </li>
+                <li>
+                    <span class="tag tag-improved">IMPROVED</span>
+                    <span>Validasi input kini ketat dan spesifik per jenis: karakter kontrol, nama branch/tag (<code>git check-ref-format</code>), revisi commit, URL (https/ssh/git@), angka, dan ID. Karakter seperti <code>$</code> tetap aman di commit message.</span>
+                </li>
+                <li>
+                    <span class="tag tag-improved">IMPROVED</span>
+                    <span><code>deploy</code>, <code>push</code>, <code>pull</code>, dan <code>sync</code> hanya berjalan di branch aktif, memerlukan <code>origin</code>, dan menolak berjalan saat rebase/merge berlangsung.</span>
+                </li>
+                <li>
+                    <span class="tag tag-improved">IMPROVED</span>
+                    <span>Daemon kini punya subperintah <code>start|stop|status|restart</code>, lock per repo (stale lock dibersihkan otomatis), dan berjalan non-interaktif.</span>
+                </li>
+                <li>
+                    <span class="tag tag-improved">IMPROVED</span>
+                    <span><code>config set</code> memakai allowlist kunci dan opsi <code>--local</code>; <code>keygen</code> tidak menimpa kunci lama kecuali <code>--force</code> (kunci lama di-backup); URL remote disamarkan di output.</span>
+                </li>
+                <li>
+                    <span class="tag tag-improved">IMPROVED</span>
+                    <span><code>squash</code> memvalidasi jumlah commit dan working tree bersih; <code>reset hard</code> wajib target eksplisit; <code>merge</code> mendukung <code>--no-ff</code> / <code>--squash</code>; <code>clone</code> mendukung <code>--depth</code> / <code>--branch</code>; <code>webhook</code> mencoba ulang hingga 3 kali.</span>
+                </li>
+                <li>
+                    <span class="tag tag-fix">FIX</span>
+                    <span><code>fail()</code> output ke <code>stderr</code> agar error tidak tercampur dengan stdout; <code>cmd_init</code> memakai <code>git -C</code> tanpa <code>cd</code> dalam subshell.</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Quick Install -->
+        <section id="install" class="install-section" aria-labelledby="install-heading">
+            <h2 id="install-heading">⚡ Quick Install</h2>
+            <div class="code-block">
+                <button class="copy-btn" type="button" onclick="copyToClipboard(this)" aria-label="Salin perintah instalasi">Copy</button>
+                <code id="install-cmd">curl -sL https://raw.githubusercontent.com/Ziferd/Gitflux/main/Gitflux.sh -o $PREFIX/bin/gitflux &amp;&amp; chmod +x $PREFIX/bin/gitflux &amp;&amp; gitflux setup</code>
+            </div>
+            <p style="margin-top:12px;color:var(--text-secondary);font-size:0.85em;">
+                Lalu ketik <code style="color:var(--accent);">gitflux help</code> untuk melihat semua perintah.
+            </p>
+            <p style="margin-top:8px;color:var(--text-secondary);font-size:0.85em;">
+                Di Linux/macOS tanpa <code>$PREFIX</code>, ganti <code>$PREFIX/bin</code> dengan <code>/usr/local/bin</code> dan gunakan <code>sudo</code>.
+                <code>gitflux setup</code> memasang <code>git</code>, <code>gh</code>, <code>curl</code>, dan <code>openssh</code>.
+            </p>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>
+            Dibuat oleh <a href="https://github.com/Ziferd" target="_blank" rel="noopener noreferrer">Ziferd</a> •
+            Lisensi <a href="https://github.com/Ziferd/Gitflux/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a> •
+            <a href="https://github.com/Ziferd/Gitflux" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </p>
+        <p style="margin-top:6px;">© 2026 Gitflux. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function copyToClipboard(btn) {
+            const cmdEl = document.getElementById('install-cmd');
+            if (!cmdEl) return;
+            const text = cmdEl.textContent.trim();
+
+            const done = () => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(done).catch(() => {
+                    fallbackCopy(text, done);
+                });
+            } else {
+                fallbackCopy(text, done);
+            }
+        }
+
+        function fallbackCopy(text, onDone) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'absolute';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                onDone();
+            } catch (e) {
+                console.error('Copy failed', e);
+            } finally {
+                document.body.removeChild(ta);
+            }
+        }
+    </script>
+</body>
+</html>
